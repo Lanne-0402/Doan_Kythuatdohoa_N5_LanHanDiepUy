@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kỹ thuật đồ họa</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="game-container">
+    
+    <div class="left-panel">
+        
+        <div id="frame6" class="frame active">
+            <div class="dropdown-container" id="shapeDropdown6">
+                <button class="btn-ui dropdown-toggle" style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                    <span>Chọn Hình</span> <span>▼</span>
+                </button>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item" data-shape="Hình Hộp Chữ Nhật">Hình Hộp Chữ Nhật</div>
+                    <div class="dropdown-item" data-shape="Hình Trụ">Hình Trụ</div>
+                </div>
+            </div>
+            
+            <div class="card-ui question-box">?</div>
+            
+            <div class="btn-group">
+                <button class="btn-ui">Vẽ</button>
+                <button class="btn-ui">Xóa</button>
+            </div>
+            <button class="btn-ui to-frame5-btn">Hệ tọa độ 3D</button>
+        </div>
+
+        <div id="frame4" class="frame">
+            <div class="dropdown-container" id="shapeDropdown4">
+                <button class="btn-ui dropdown-toggle" id="selectedShapeTitle" style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                    <span>Hình Hộp Chữ Nhật</span> <span>▼</span>
+                </button>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item" data-shape="Hình Hộp Chữ Nhật">Hình Hộp Chữ Nhật</div>
+                    <div class="dropdown-item" data-shape="Hình Trụ">Hình Trụ</div>
+                </div>
+            </div>
+            
+            <div class="card-ui text-center">
+                <div style="margin-bottom: 20px;">
+                    <span class="label-text">Nhập tọa độ điểm góc</span>
+                    <div class="input-coords">
+                        <input type="number" placeholder="X">
+                        <input type="number" placeholder="Y">
+                        <input type="number" placeholder="Z">
+                    </div>
+                </div>
+                
+                <div>
+                    <span class="label-text">Nhập kích thước của hình</span>
+                    <div id="dynamicInputs">
+                        </div>
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn-ui">Vẽ</button>
+                <button class="btn-ui">Xóa</button>
+            </div>
+            <button class="btn-ui to-frame5-btn">Hệ tọa độ 3D</button>
+        </div>
+
+        <div id="frame5" class="frame">
+            <button class="btn-ui" style="text-align: left;">Chọn ngữ cảnh</button>
+            
+            <div class="card-ui text-center">
+                <span class="label-text">Nhập tọa độ điểm góc</span>
+                <div class="input-coords">
+                    <input type="number" placeholder="X">
+                    <input type="number" placeholder="Y">
+                    <input type="number" placeholder="Z">
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn-ui">Chạy</button>
+                <button class="btn-ui">Xóa</button>
+            </div>
+            <button class="btn-ui" id="toFrame6Btn">Hệ tọa độ 2D</button>
+        </div>
+
+    </div>
+
+    <div class="right-panel" id="displayCanvas"></div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
