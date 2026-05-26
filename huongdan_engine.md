@@ -2,13 +2,12 @@
 
 Đây là lõi đồ họa `engine.py` của nhóm mình, được xây dựng hoàn toàn từ đầu (không dùng thư viện vẽ có sẵn). File này cung cấp mọi công cụ cần thiết để bạn thực hiện nhiệm vụ **Vẽ hình & Chuyển động 2D**. 
 
----
-
 ## 1. Cài đặt môi trường
 Động cơ sử dụng tọa độ đồng nhất và ma trận để tính toán siêu tốc, nên bạn cần cài đặt thư viện `numpy` và 'pillow'trước khi chạy:
 ```bash
 pip install numpy
 pip install PIL
+```
 
 ## 2. Các thành phần chính trong engine.py
 GraphicsEngine: Chứa các thuật toán lõi (Bresenham, Midpoint), thuật toán tô màu (Boundary Fill với nét cọ đã được làm đậm 3x3) và các hàm tạo ma trận (Tịnh tiến, Thu phóng, Quay).
@@ -16,6 +15,8 @@ GraphicsEngine: Chứa các thuật toán lõi (Bresenham, Midpoint), thuật to
 Polygon: Class dùng để đóng gói các hình vẽ. Nó tự động chuyển danh sách tọa độ đỉnh thành Ma trận 3xN và xử lý phép nhân ma trận tối ưu.
 
 ## 3. Hướng dẫn vẽ hình cơ bản
+Để vẽ một hình, chỉ cần nạp tọa độ các đỉnh theo thứ tự (để engine tự nối khép kín). Gốc tọa độ (0, 0) nằm ở chính giữa màn hình
+```bash
     from engine import GraphicsEngine, Polygon
     # Khởi tạo Engine (ví dụ màn hình 800x600)
     engine = GraphicsEngine(800, 600)
@@ -24,11 +25,12 @@ Polygon: Class dùng để đóng gói các hình vẽ. Nó tự động chuyể
     my_rect = Polygon(rect_vertices)
     # Vẽ hình lên màn hình
     my_rect.draw(engine, color=(255, 0, 0)) # Vẽ viền đỏ
-
+```
 ## 4. Hướng dẫn làm Chuyển động (Animation)
 Để tạo chuyển động mượt mà, nguyên tắc là: Xóa màn hình -> Tính ma trận biến đổi -> Cập nhật hình -> Vẽ lại -> Tạm dừng (FPS).
 
 Dưới đây là khung code mẫu để làm cho hình chữ nhật tự động xoay và di chuyển:
+```bash
 import time
 
 # Tạo vòng lặp hoạt hình (Animation Loop)
@@ -51,7 +53,7 @@ while True:
     
     # Bước 5: Tạm dừng để kiểm soát tốc độ khung hình (VD: ~30 FPS)
     time.sleep(0.03)
-
+```
 ## 5. Note
 Phép quay mặc định quanh gốc (0,0): Nếu muốn một vật thể tự xoay quanh chính tâm của nó khi nó đang ở vị trí khác, phải dùng chuỗi 3 ma trận: T_xuôi @ R @ T_ngược.
 
