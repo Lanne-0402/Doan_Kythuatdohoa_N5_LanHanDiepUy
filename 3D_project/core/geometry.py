@@ -2,9 +2,6 @@
 geometry.py
 Tạo dữ liệu hình học 3D dạng wireframe + faces.
 
-Bản v3 bổ sung:
-- faces: danh sách các mặt của vật thể.
-- Từ faces có thể xác định cạnh nào thuộc mặt thấy được / bị khuất.
 """
 
 from dataclasses import dataclass, field
@@ -144,8 +141,6 @@ def make_sphere(center: Point3D, radius: float, lat_steps: int = 12, lon_steps: 
     """
     Tạo hình cầu dạng lưới kinh tuyến - vĩ tuyến.
 
-    Bản v3 tạo thêm faces nhỏ trên bề mặt cầu để xác định phần trước/sau
-    khi vẽ nét liền/nét đứt.
     """
     lat_steps = max(6, int(lat_steps))
     lon_steps = max(12, int(lon_steps))

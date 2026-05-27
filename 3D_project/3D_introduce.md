@@ -20,7 +20,7 @@ Project này tích hợp UI HTML/CSS pixel với phần xử lý Python.
 ## Cấu trúc
 
 ```text
-app.py
+project.py
 core/
   geometry.py
   projection.py
@@ -44,7 +44,7 @@ pip install -r requirements.txt
 ### 2. Chạy server
 
 ```bash
-python app.py
+python project.py
 ```
 
 ### 3. Mở trình duyệt

@@ -19,9 +19,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const ctx = canvas.getContext("2d");
 
     const DEG45 = Math.PI / 4;
-
-    // Hướng nhìn cố định trong không gian sau khi xoay.
-    // Dấu y âm giúp thấy mặt trên; dấu z dương giúp thấy mặt trước theo quy ước z đi vào sâu.
+    const DEFAULT_UNIT_SIZE = 5;
+    const DEFAULT_BOUNDS_UNITS = {
+        x: {min: 0, max: 12},
+        y: {min: 0, max: 12},
+        z: {min: 0, max: 12},
+    };
+    const MIN_AXIS_SPAN_UNITS = 12;
+    const AXIS_PADDING_UNITS = 3;
     const VIEW_DIR = normalize3({x: -0.45, y: -0.65, z: 1.0});
 
     const shapeNames = {
@@ -35,14 +40,12 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentScene = {
         projection: "cabinet",
         mesh: null,
-        dimensions: {x: 6, y: 6, z: 6},
+        boundsUnits: DEFAULT_BOUNDS_UNITS,
+        unitSize: DEFAULT_UNIT_SIZE,
     };
 
-    // Góc xoay toàn bộ không gian Oxyz.
     let rotationX = -0.15;
     let rotationY = 0.25;
-
-    // Tỉ lệ phóng to / thu nhỏ bằng con lăn chuột.
     let zoomScale = 1.0;
 
     let isDragging = false;
@@ -74,44 +77,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.addEventListener("mousemove", (event) => {
         if (!isDragging) return;
-
         const dx = event.clientX - lastMouseX;
         const dy = event.clientY - lastMouseY;
-
         rotationY += dx * 0.01;
         rotationX += dy * 0.01;
-
         lastMouseX = event.clientX;
         lastMouseY = event.clientY;
-
         renderScene();
     });
 
     canvas.addEventListener("dblclick", () => {
-        resetRotation();
+        resetView();
         showToast("Đã đặt lại góc nhìn và mức zoom.");
     });
 
     canvas.addEventListener("wheel", (event) => {
         event.preventDefault();
-
         const zoomStep = event.deltaY < 0 ? 1.1 : 0.9;
         zoomScale *= zoomStep;
-
-        // Giới hạn zoom để tránh hình quá nhỏ hoặc quá lớn.
         zoomScale = Math.max(0.35, Math.min(zoomScale, 4.0));
-
         renderScene();
     }, { passive: false });
 
     if (resetViewBtn) {
         resetViewBtn.addEventListener("click", () => {
-            resetRotation();
-            showToast("Đã đặt lại góc nhìn.");
+            resetView();
+            showToast("Đã đặt lại góc nhìn và mức zoom.");
         });
     }
 
-    function resetRotation() {
+    function resetView() {
         rotationX = -0.15;
         rotationY = 0.25;
         zoomScale = 1.0;
@@ -127,7 +122,6 @@ document.addEventListener("DOMContentLoaded", () => {
         dropdown.querySelector(".dropdown-toggle").addEventListener("click", (event) => {
             event.stopPropagation();
             dropdown.classList.toggle("open");
-
             if (dropdown === dropdown6) dropdown4.classList.remove("open");
             if (dropdown === dropdown4) dropdown6.classList.remove("open");
         });
@@ -153,9 +147,10 @@ document.addEventListener("DOMContentLoaded", () => {
             switchFrame("frame5");
             currentScene.projection = projectionMethodAxes.value;
             currentScene.mesh = null;
-            currentScene.dimensions = {x: 6, y: 6, z: 6};
+            currentScene.boundsUnits = DEFAULT_BOUNDS_UNITS;
+            currentScene.unitSize = DEFAULT_UNIT_SIZE;
             renderScene();
-            showToast("Kéo chuột để xoay hệ trục Oxyz, lăn chuột để zoom.");
+            showToast("Đang xem hệ trục/lưới mặc định. Khi vẽ hình, lưới sẽ tự mở rộng theo tọa độ.");
         });
     });
 
@@ -166,7 +161,8 @@ document.addEventListener("DOMContentLoaded", () => {
     drawAxesBtn.addEventListener("click", () => {
         currentScene.projection = projectionMethodAxes.value;
         currentScene.mesh = null;
-        currentScene.dimensions = {x: 6, y: 6, z: 6};
+        currentScene.boundsUnits = DEFAULT_BOUNDS_UNITS;
+        currentScene.unitSize = DEFAULT_UNIT_SIZE;
         renderScene();
     });
 
@@ -194,7 +190,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".clear-btn").forEach(button => {
         button.addEventListener("click", () => {
             currentScene.mesh = null;
-            currentScene.dimensions = {x: 6, y: 6, z: 6};
+            currentScene.boundsUnits = DEFAULT_BOUNDS_UNITS;
+            currentScene.unitSize = DEFAULT_UNIT_SIZE;
             renderScene();
             showToast("Đã xóa hình vẽ.");
         });
@@ -202,7 +199,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function changeAndSetupShape(shape) {
         currentShape = shape;
-
         const shapeText = shapeNames[shape] || "Hình Hộp Chữ Nhật";
         selectedShapeTitle.querySelector("span").innerText = shapeText;
         questionBox.innerText = shapeText.replace("Hình ", "");
@@ -210,27 +206,27 @@ document.addEventListener("DOMContentLoaded", () => {
         if (shape === "cuboid") {
             originLabel.innerText = "Nhập tọa độ đỉnh dưới - trái - trước";
             dynamicInputs.innerHTML = `
-                <input type="number" class="input-dimension" data-param="length" placeholder="Chiều dài" min="0" value="4">
-                <input type="number" class="input-dimension" data-param="width" placeholder="Chiều rộng / chiều sâu" min="0" value="3">
-                <input type="number" class="input-dimension" data-param="height" placeholder="Chiều cao" min="0" value="3">
+                <input type="number" class="input-dimension" data-param="length" placeholder="Chiều dài" min="0">
+                <input type="number" class="input-dimension" data-param="width" placeholder="Chiều rộng / chiều sâu" min="0">
+                <input type="number" class="input-dimension" data-param="height" placeholder="Chiều cao" min="0">
             `;
         } else if (shape === "cube") {
             originLabel.innerText = "Nhập tọa độ đỉnh dưới - trái - trước";
             dynamicInputs.innerHTML = `
-                <input type="number" class="input-dimension" data-param="size" placeholder="Cạnh lập phương" min="0" value="3">
+                <input type="number" class="input-dimension" data-param="size" placeholder="Cạnh lập phương" min="0">
             `;
         } else if (shape === "cylinder") {
             originLabel.innerText = "Nhập tọa độ tâm đáy dưới";
             dynamicInputs.innerHTML = `
-                <input type="number" class="input-dimension" data-param="radius" placeholder="Bán kính đáy" min="0" value="2">
-                <input type="number" class="input-dimension" data-param="height" placeholder="Chiều cao" min="0" value="4">
-                <input type="number" class="input-dimension" data-param="segments" placeholder="Số đoạn chia" min="12" value="36">
+                <input type="number" class="input-dimension" data-param="radius" placeholder="Bán kính đáy" min="0">
+                <input type="number" class="input-dimension" data-param="height" placeholder="Chiều cao" min="0">
+                <input type="number" class="input-dimension" data-param="segments" placeholder="Số đoạn chia" min="12">
             `;
         } else if (shape === "sphere") {
             originLabel.innerText = "Nhập tọa độ tâm hình cầu";
             dynamicInputs.innerHTML = `
-                <input type="number" class="input-dimension" data-param="radius" placeholder="Bán kính" min="0" value="2">
-                <input type="number" class="input-dimension" data-param="segments" placeholder="Số đoạn chia" min="12" value="24">
+                <input type="number" class="input-dimension" data-param="radius" placeholder="Bán kính" min="0">
+                <input type="number" class="input-dimension" data-param="segments" placeholder="Số đoạn chia" min="12">
             `;
         }
 
@@ -239,18 +235,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function getNumber(id, fallback = 0) {
-        const value = document.getElementById(id).value;
+        const value = document.getElementById(id)?.value ?? "";
         const parsed = Number(value);
         return Number.isFinite(parsed) ? parsed : fallback;
     }
 
     function collectParams() {
         const params = {};
-
         dynamicInputs.querySelectorAll("[data-param]").forEach(input => {
             params[input.dataset.param] = input.value;
         });
-
         return params;
     }
 
@@ -274,7 +268,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             const data = await response.json();
-
             if (!response.ok || !data.ok) {
                 throw new Error(data.error || "Không thể vẽ hình.");
             }
@@ -282,11 +275,12 @@ document.addEventListener("DOMContentLoaded", () => {
             currentScene = {
                 projection: data.projection,
                 mesh: data.mesh,
-                dimensions: data.dimensions,
+                boundsUnits: data.bounds_units || DEFAULT_BOUNDS_UNITS,
+                unitSize: data.unit_size || DEFAULT_UNIT_SIZE,
             };
 
             renderScene();
-            showToast(`Đã vẽ ${shapeNames[currentShape]}. Kéo chuột để xoay, lăn chuột để zoom.`);
+            showToast(`Đã vẽ ${shapeNames[currentShape]}. Lưới/trục đã tự mở rộng theo tọa độ và kích thước.`);
         } catch (error) {
             showToast(error.message, true);
         }
@@ -296,29 +290,29 @@ document.addEventListener("DOMContentLoaded", () => {
         clearCanvas();
 
         const rect = canvas.getBoundingClientRect();
-        const dimensions = currentScene.dimensions || {x: 6, y: 6, z: 6};
+        const boundsUnits = currentScene.boundsUnits || DEFAULT_BOUNDS_UNITS;
         const projection = currentScene.projection || "cabinet";
+        const unitSize = currentScene.unitSize || DEFAULT_UNIT_SIZE;
 
-        const axisData = createAxisData(dimensions);
-        const rotatedAxisPoints = axisData.points.map(rotatePoint);
-        const projectedAxisPoints = rotatedAxisPoints.map(p => projectPoint(p, projection));
+        const axisData = createAxisData(boundsUnits, unitSize);
 
-        let projectedMeshPoints = [];
         let rotatedMeshPoints = [];
+        let projectedMeshPoints = [];
 
         if (currentScene.mesh && currentScene.mesh.vertices) {
             rotatedMeshPoints = currentScene.mesh.vertices.map(rotatePoint);
-            projectedMeshPoints = rotatedMeshPoints.map(p => projectPoint(p, projection));
+            projectedMeshPoints = rotatedMeshPoints.map(point => projectPoint(point, projection));
         }
 
         const allProjectedPoints = [
-            ...projectedAxisPoints,
+            ...axisData.axisReferencePoints.map(point => projectPoint(rotatePoint(point), projection)),
+            ...axisData.gridReferencePoints.map(point => projectPoint(rotatePoint(point), projection)),
             ...projectedMeshPoints,
-            ...axisData.tickPoints.map(point => projectPoint(rotatePoint(point), projection)),
         ];
 
         const transform = createScreenTransform(allProjectedPoints, rect.width, rect.height, zoomScale);
 
+        drawGrid(axisData.gridLines, projection, transform);
         drawAxes(axisData, projection, transform);
 
         if (currentScene.mesh) {
@@ -326,233 +320,186 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    function createAxisData(dimensions) {
-        const maxDim = Math.max(
-            Number(dimensions.x) || 0,
-            Number(dimensions.y) || 0,
-            Number(dimensions.z) || 0,
-            6
-        );
+    function normalizeAxisRange(minVal, maxVal) {
+        let minUnits = Math.min(0, Math.floor(minVal) - AXIS_PADDING_UNITS);
+        let maxUnits = Math.max(0, Math.ceil(maxVal) + AXIS_PADDING_UNITS);
 
-        const axisLength = maxDim + 1;
+        if (maxUnits - minUnits < MIN_AXIS_SPAN_UNITS) {
+            maxUnits = minUnits + MIN_AXIS_SPAN_UNITS;
+        }
 
-        const points = [
-            {x: 0, y: 0, z: 0},
-            {x: axisLength, y: 0, z: 0},
-            {x: 0, y: axisLength, z: 0},
-            {x: 0, y: 0, z: axisLength},
-        ];
+        return {min: minUnits, max: maxUnits};
+    }
 
-        const xTicks = tickValues(Number(dimensions.x) || 6).map(value => ({axis: "x", value, point: {x: value, y: 0, z: 0}}));
-        const yTicks = tickValues(Number(dimensions.y) || 6).map(value => ({axis: "y", value, point: {x: 0, y: value, z: 0}}));
-        const zTicks = tickValues(Number(dimensions.z) || 6).map(value => ({axis: "z", value, point: {x: 0, y: 0, z: value}}));
+    function createAxisData(boundsUnits, unitSize) {
+        const xr = normalizeAxisRange(boundsUnits.x.min, boundsUnits.x.max);
+        const yr = normalizeAxisRange(boundsUnits.y.min, boundsUnits.y.max);
+        const zr = normalizeAxisRange(boundsUnits.z.min, boundsUnits.z.max);
 
-        const ticks = [...xTicks, ...yTicks, ...zTicks];
+        const xStart = {x: xr.min * unitSize, y: 0, z: 0};
+        const xEnd = {x: xr.max * unitSize, y: 0, z: 0};
+
+        const yStart = {x: 0, y: yr.min * unitSize, z: 0};
+        const yEnd = {x: 0, y: yr.max * unitSize, z: 0};
+
+        const zStart = {x: 0, y: 0, z: zr.min * unitSize};
+        const zEnd = {x: 0, y: 0, z: zr.max * unitSize};
+
+        const axisReferencePoints = [xStart, xEnd, yStart, yEnd, zStart, zEnd, {x:0, y:0, z:0}];
+
+        const ticks = [];
+        const xLabelStep = computeLabelStep(xr.max - xr.min);
+        const yLabelStep = computeLabelStep(yr.max - yr.min);
+        const zLabelStep = computeLabelStep(zr.max - zr.min);
+
+        for (let value = xr.min; value <= xr.max; value++) {
+            if (value === 0) continue;
+            ticks.push({
+                axis: "x",
+                value,
+                showLabel: Math.abs(value) % xLabelStep === 0,
+                point: {x: value * unitSize, y: 0, z: 0},
+            });
+        }
+
+        for (let value = yr.min; value <= yr.max; value++) {
+            if (value === 0) continue;
+            ticks.push({
+                axis: "y",
+                value,
+                showLabel: Math.abs(value) % yLabelStep === 0,
+                point: {x: 0, y: value * unitSize, z: 0},
+            });
+        }
+
+        for (let value = zr.min; value <= zr.max; value++) {
+            if (value === 0) continue;
+            ticks.push({
+                axis: "z",
+                value,
+                showLabel: Math.abs(value) % zLabelStep === 0,
+                point: {x: 0, y: 0, z: value * unitSize},
+            });
+        }
+
+        const gridLines = [];
+        const gridReferencePoints = [];
+        const addGridLine = (a, b) => {
+            gridLines.push({a, b});
+            gridReferencePoints.push(a, b);
+        };
+
+        for (let x = xr.min; x <= xr.max; x++) {
+            addGridLine(
+                {x: x * unitSize, y: yr.min * unitSize, z: 0},
+                {x: x * unitSize, y: yr.max * unitSize, z: 0}
+            );
+        }
+        for (let y = yr.min; y <= yr.max; y++) {
+            addGridLine(
+                {x: xr.min * unitSize, y: y * unitSize, z: 0},
+                {x: xr.max * unitSize, y: y * unitSize, z: 0}
+            );
+        }
+
+        for (let x = xr.min; x <= xr.max; x++) {
+            addGridLine(
+                {x: x * unitSize, y: 0, z: zr.min * unitSize},
+                {x: x * unitSize, y: 0, z: zr.max * unitSize}
+            );
+        }
+        for (let z = zr.min; z <= zr.max; z++) {
+            addGridLine(
+                {x: xr.min * unitSize, y: 0, z: z * unitSize},
+                {x: xr.max * unitSize, y: 0, z: z * unitSize}
+            );
+        }
+
+        for (let y = yr.min; y <= yr.max; y++) {
+            addGridLine(
+                {x: 0, y: y * unitSize, z: zr.min * unitSize},
+                {x: 0, y: y * unitSize, z: zr.max * unitSize}
+            );
+        }
+        for (let z = zr.min; z <= zr.max; z++) {
+            addGridLine(
+                {x: 0, y: yr.min * unitSize, z: z * unitSize},
+                {x: 0, y: yr.max * unitSize, z: z * unitSize}
+            );
+        }
 
         return {
-            points,
-            ticks,
-            tickPoints: ticks.map(tick => tick.point),
+            xStart, xEnd, yStart, yEnd, zStart, zEnd,
+            ticks, gridLines, axisReferencePoints, gridReferencePoints,
         };
     }
 
-    function tickValues(maxValue) {
-        if (!Number.isFinite(maxValue) || maxValue <= 0) return [];
-
-        const values = [];
-        const maxTicks = 12;
-        let step = 1;
-
-        if (maxValue > maxTicks) {
-            step = Math.ceil(maxValue / maxTicks);
-        }
-
-        for (let value = step; value <= Math.floor(maxValue); value += step) {
-            values.push(value);
-        }
-
-        const rounded = Number(maxValue.toFixed(2));
-        const last = values.length ? values[values.length - 1] : 0;
-
-        if (Math.abs(rounded - last) > 0.001) {
-            values.push(rounded);
-        }
-
-        return values;
+    function computeLabelStep(span) {
+        if (span <= 12) return 1;
+        return Math.ceil(span / 12);
     }
 
-    function drawAxes(axisData, projection, transform) {
-        const projected = axisData.points.map(point => projectPoint(rotatePoint(point), projection));
-
-        drawArrow(projected[0], projected[1], transform, "X");
-        drawArrow(projected[0], projected[2], transform, "Y");
-        drawArrow(projected[0], projected[3], transform, "Z");
-
-        const origin = transform(projected[0]);
-        ctx.font = "bold 16px Courier New";
-        ctx.fillStyle = "#1e1e1e";
-        ctx.fillText("O", origin.x - 18, origin.y + 18);
-
-        axisData.ticks.forEach(tick => {
-            drawAxisTick(tick, projection, transform);
-        });
-    }
-
-    function drawAxisTick(tick, projection, transform) {
-        const originProjected = projectPoint(rotatePoint({x: 0, y: 0, z: 0}), projection);
-        const tickProjected = projectPoint(rotatePoint(tick.point), projection);
-
-        const originScreen = transform(originProjected);
-        const tickScreen = transform(tickProjected);
-
-        const vx = tickScreen.x - originScreen.x;
-        const vy = tickScreen.y - originScreen.y;
-        const length = Math.hypot(vx, vy);
-
-        if (length < 1) return;
-
-        const nx = -vy / length;
-        const ny = vx / length;
-        const tickSize = 6;
-
-        ctx.setLineDash([]);
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = "#1e1e1e";
-        ctx.beginPath();
-        ctx.moveTo(tickScreen.x - nx * tickSize, tickScreen.y - ny * tickSize);
-        ctx.lineTo(tickScreen.x + nx * tickSize, tickScreen.y + ny * tickSize);
-        ctx.stroke();
-
-        ctx.font = "bold 12px Courier New";
-        ctx.fillStyle = "#1e1e1e";
-
-        const label = Number.isInteger(tick.value) ? String(tick.value) : tick.value.toFixed(2);
-        ctx.fillText(label, tickScreen.x + nx * 10 + 2, tickScreen.y + ny * 10 - 2);
-    }
-
-    function drawMeshWithHiddenLines(mesh, rotatedVertices, projectedVertices, transform) {
-        const edgeFaces = buildEdgeFaces(mesh.faces || []);
-        const visibleFaces = (mesh.faces || []).map(face => isFaceVisible(face, rotatedVertices));
-
-        const hiddenEdges = [];
-        const visibleEdges = [];
-
-        (mesh.edges || []).forEach(edge => {
-            const key = edgeKey(edge[0], edge[1]);
-            const faces = edgeFaces.get(key) || [];
-
-            let isVisible = true;
-
-            if (faces.length > 0) {
-                isVisible = faces.some(faceIndex => visibleFaces[faceIndex]);
-            }
-
-            if (isVisible) {
-                visibleEdges.push(edge);
-            } else {
-                hiddenEdges.push(edge);
-            }
+    function drawGrid(gridLines, projection, transform) {
+        const segments = gridLines.map(line => {
+            const a3 = rotatePoint(line.a);
+            const b3 = rotatePoint(line.b);
+            return {
+                a: projectPoint(a3, projection),
+                b: projectPoint(b3, projection),
+                depth: (a3.z + b3.z) / 2,
+            };
         });
 
-        // Vẽ nét khuất trước, sau đó vẽ nét thấy đè lên trên.
-        hiddenEdges.forEach(edge => {
-            drawLine(projectedVertices[edge[0]], projectedVertices[edge[1]], transform, {
-                width: 2,
-                dashed: true,
-                alpha: 0.75,
-            });
-        });
-
-        visibleEdges.forEach(edge => {
-            drawLine(projectedVertices[edge[0]], projectedVertices[edge[1]], transform, {
-                width: 2.4,
-                dashed: false,
-                alpha: 1,
-            });
-        });
-    }
-
-    function buildEdgeFaces(faces) {
-        const map = new Map();
-
-        faces.forEach((face, faceIndex) => {
-            for (let i = 0; i < face.length; i++) {
-                const a = face[i];
-                const b = face[(i + 1) % face.length];
-                const key = edgeKey(a, b);
-
-                if (!map.has(key)) {
-                    map.set(key, []);
-                }
-
-                map.get(key).push(faceIndex);
-            }
-        });
-
-        return map;
-    }
-
-    function isFaceVisible(face, vertices) {
-        const normal = faceNormal(face, vertices);
-        if (!normal) return false;
-
-        // Mặt có pháp tuyến cùng hướng nhìn được xem là mặt trước.
-        // Bản trước dùng dấu ngược nên một số cạnh mặt trước bị vẽ nét đứt.
-        return dot3(normal, VIEW_DIR) > 0.0001;
-    }
-
-    function faceNormal(face, vertices) {
-        if (!face || face.length < 3) return null;
-
-        const p0 = vertices[face[0]];
-
-        for (let i = 1; i < face.length - 1; i++) {
-            const p1 = vertices[face[i]];
-            const p2 = vertices[face[i + 1]];
-
-            const u = subtract3(p1, p0);
-            const v = subtract3(p2, p0);
-            const n = cross3(u, v);
-            const length = Math.hypot(n.x, n.y, n.z);
-
-            if (length > 0.000001) {
-                return {
-                    x: n.x / length,
-                    y: n.y / length,
-                    z: n.z / length,
-                };
-            }
-        }
-
-        return null;
-    }
-
-    function drawLine(a, b, transform, options = {}) {
-        const p1 = transform(a);
-        const p2 = transform(b);
+        segments.sort((a, b) => a.depth - b.depth);
 
         ctx.save();
-        ctx.globalAlpha = options.alpha ?? 1;
-        ctx.beginPath();
-        ctx.lineWidth = options.width || 2;
         ctx.strokeStyle = "#1e1e1e";
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.15;
+        ctx.setLineDash([4, 6]);
 
-        if (options.dashed) {
-            ctx.setLineDash([8, 6]);
-        } else {
-            ctx.setLineDash([]);
-        }
+        segments.forEach(segment => {
+            const p1 = transform(segment.a);
+            const p2 = transform(segment.b);
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+        });
 
-        ctx.moveTo(Math.round(p1.x), Math.round(p1.y));
-        ctx.lineTo(Math.round(p2.x), Math.round(p2.y));
-        ctx.stroke();
         ctx.restore();
     }
 
-    function drawArrow(a, b, transform, label) {
-        const p1 = transform(a);
-        const p2 = transform(b);
+    function drawAxes(axisData, projection, transform) {
+        const proj = {
+            xStart: projectPoint(rotatePoint(axisData.xStart), projection),
+            xEnd: projectPoint(rotatePoint(axisData.xEnd), projection),
+            yStart: projectPoint(rotatePoint(axisData.yStart), projection),
+            yEnd: projectPoint(rotatePoint(axisData.yEnd), projection),
+            zStart: projectPoint(rotatePoint(axisData.zStart), projection),
+            zEnd: projectPoint(rotatePoint(axisData.zEnd), projection),
+            origin: projectPoint(rotatePoint({x: 0, y: 0, z: 0}), projection),
+        };
 
+        drawAxisLine(proj.xStart, proj.xEnd, transform, "X");
+        drawAxisLine(proj.yStart, proj.yEnd, transform, "Y");
+        drawAxisLine(proj.zStart, proj.zEnd, transform, "Z");
+
+        const origin = transform(proj.origin);
+        ctx.save();
+        ctx.font = "bold 16px Courier New";
+        ctx.fillStyle = "#1e1e1e";
+        ctx.fillText("O", origin.x - 18, origin.y + 18);
+        ctx.restore();
+
+        axisData.ticks.forEach(tick => drawAxisTick(tick, axisData, projection, transform));
+    }
+
+    function drawAxisLine(startPoint, endPoint, transform, label) {
+        const p1 = transform(startPoint);
+        const p2 = transform(endPoint);
+
+        ctx.save();
         ctx.setLineDash([]);
         ctx.lineWidth = 3;
         ctx.strokeStyle = "#1e1e1e";
@@ -580,6 +527,137 @@ document.addEventListener("DOMContentLoaded", () => {
 
         ctx.font = "bold 18px Courier New";
         ctx.fillText(label, p2.x + 12, p2.y - 8);
+        ctx.restore();
+    }
+
+    function drawAxisTick(tick, axisData, projection, transform) {
+        const tickProjected = projectPoint(rotatePoint(tick.point), projection);
+        const tickScreen = transform(tickProjected);
+
+        let axisA, axisB;
+        if (tick.axis === "x") {
+            axisA = transform(projectPoint(rotatePoint(axisData.xStart), projection));
+            axisB = transform(projectPoint(rotatePoint(axisData.xEnd), projection));
+        } else if (tick.axis === "y") {
+            axisA = transform(projectPoint(rotatePoint(axisData.yStart), projection));
+            axisB = transform(projectPoint(rotatePoint(axisData.yEnd), projection));
+        } else {
+            axisA = transform(projectPoint(rotatePoint(axisData.zStart), projection));
+            axisB = transform(projectPoint(rotatePoint(axisData.zEnd), projection));
+        }
+
+        const vx = axisB.x - axisA.x;
+        const vy = axisB.y - axisA.y;
+        const length = Math.hypot(vx, vy);
+        if (length < 1) return;
+
+        const nx = -vy / length;
+        const ny = vx / length;
+        const tickSize = 5;
+
+        ctx.save();
+        ctx.setLineDash([]);
+        ctx.lineWidth = 1.8;
+        ctx.strokeStyle = "#1e1e1e";
+        ctx.beginPath();
+        ctx.moveTo(tickScreen.x - nx * tickSize, tickScreen.y - ny * tickSize);
+        ctx.lineTo(tickScreen.x + nx * tickSize, tickScreen.y + ny * tickSize);
+        ctx.stroke();
+
+        if (tick.showLabel) {
+            ctx.font = "bold 11px Courier New";
+            ctx.fillStyle = "#1e1e1e";
+            ctx.fillText(String(tick.value), tickScreen.x + nx * 9 + 2, tickScreen.y + ny * 9 - 2);
+        }
+        ctx.restore();
+    }
+
+    function drawMeshWithHiddenLines(mesh, rotatedVertices, projectedVertices, transform) {
+        const edgeFaces = buildEdgeFaces(mesh.faces || []);
+        const visibleFaces = (mesh.faces || []).map(face => isFaceVisible(face, rotatedVertices));
+
+        const hiddenEdges = [];
+        const visibleEdges = [];
+
+        (mesh.edges || []).forEach(edge => {
+            const key = edgeKey(edge[0], edge[1]);
+            const faces = edgeFaces.get(key) || [];
+
+            let isVisible = true;
+            if (faces.length > 0) {
+                isVisible = faces.some(faceIndex => visibleFaces[faceIndex]);
+            }
+
+            if (isVisible) visibleEdges.push(edge);
+            else hiddenEdges.push(edge);
+        });
+
+        hiddenEdges.forEach(edge => {
+            drawLine(projectedVertices[edge[0]], projectedVertices[edge[1]], transform, {
+                width: 2, dashed: true, alpha: 0.75,
+            });
+        });
+
+        visibleEdges.forEach(edge => {
+            drawLine(projectedVertices[edge[0]], projectedVertices[edge[1]], transform, {
+                width: 2.4, dashed: false, alpha: 1,
+            });
+        });
+    }
+
+    function buildEdgeFaces(faces) {
+        const map = new Map();
+        faces.forEach((face, faceIndex) => {
+            for (let i = 0; i < face.length; i++) {
+                const a = face[i];
+                const b = face[(i + 1) % face.length];
+                const key = edgeKey(a, b);
+                if (!map.has(key)) map.set(key, []);
+                map.get(key).push(faceIndex);
+            }
+        });
+        return map;
+    }
+
+    function isFaceVisible(face, vertices) {
+        const normal = faceNormal(face, vertices);
+        if (!normal) return false;
+        return dot3(normal, VIEW_DIR) > 0.0001;
+    }
+
+    function faceNormal(face, vertices) {
+        if (!face || face.length < 3) return null;
+        const p0 = vertices[face[0]];
+
+        for (let i = 1; i < face.length - 1; i++) {
+            const p1 = vertices[face[i]];
+            const p2 = vertices[face[i + 1]];
+            const u = subtract3(p1, p0);
+            const v = subtract3(p2, p0);
+            const n = cross3(u, v);
+            const length = Math.hypot(n.x, n.y, n.z);
+
+            if (length > 0.000001) {
+                return {x: n.x / length, y: n.y / length, z: n.z / length};
+            }
+        }
+        return null;
+    }
+
+    function drawLine(a, b, transform, options = {}) {
+        const p1 = transform(a);
+        const p2 = transform(b);
+
+        ctx.save();
+        ctx.globalAlpha = options.alpha ?? 1;
+        ctx.beginPath();
+        ctx.lineWidth = options.width || 2;
+        ctx.strokeStyle = "#1e1e1e";
+        ctx.setLineDash(options.dashed ? [8, 6] : []);
+        ctx.moveTo(Math.round(p1.x), Math.round(p1.y));
+        ctx.lineTo(Math.round(p2.x), Math.round(p2.y));
+        ctx.stroke();
+        ctx.restore();
     }
 
     function clearCanvas() {
@@ -589,25 +667,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function createScreenTransform(points, width, height, zoom = 1.0) {
         const padding = 78;
-
-        if (!points.length) {
-            return () => ({x: width / 2, y: height / 2});
-        }
+        if (!points.length) return () => ({x: width / 2, y: height / 2});
 
         let minX = Math.min(...points.map(p => p.x));
         let maxX = Math.max(...points.map(p => p.x));
         let minY = Math.min(...points.map(p => p.y));
         let maxY = Math.max(...points.map(p => p.y));
 
-        if (Math.abs(maxX - minX) < 0.001) {
-            minX -= 1;
-            maxX += 1;
-        }
-
-        if (Math.abs(maxY - minY) < 0.001) {
-            minY -= 1;
-            maxY += 1;
-        }
+        if (Math.abs(maxX - minX) < 0.001) { minX -= 1; maxX += 1; }
+        if (Math.abs(maxY - minY) < 0.001) { minY -= 1; maxY += 1; }
 
         const sceneWidth = maxX - minX;
         const sceneHeight = maxY - minY;
@@ -618,7 +686,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const centerX = (minX + maxX) / 2;
         const centerY = (minY + maxY) / 2;
 
-        return function transform(point) {
+        return function(point) {
             return {
                 x: width / 2 + (point.x - centerX) * scale,
                 y: height / 2 - (point.y - centerY) * scale,
@@ -628,7 +696,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function projectPoint(point, method) {
         const factor = method === "cavalier" ? 1 : 0.5;
-
         return {
             x: point.x + factor * point.z * Math.cos(DEG45),
             y: point.y + factor * point.z * Math.sin(DEG45),
@@ -636,7 +703,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function rotatePoint(point) {
-        // Xoay quanh trục Y.
         const cy = Math.cos(rotationY);
         const sy = Math.sin(rotationY);
 
@@ -644,7 +710,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const y1 = point.y;
         const z1 = -point.x * sy + point.z * cy;
 
-        // Xoay quanh trục X.
         const cx = Math.cos(rotationX);
         const sx = Math.sin(rotationX);
 
@@ -660,11 +725,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function subtract3(a, b) {
-        return {
-            x: a.x - b.x,
-            y: a.y - b.y,
-            z: a.z - b.z,
-        };
+        return {x: a.x - b.x, y: a.y - b.y, z: a.z - b.z};
     }
 
     function cross3(a, b) {
@@ -681,22 +742,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function normalize3(v) {
         const length = Math.hypot(v.x, v.y, v.z) || 1;
-        return {
-            x: v.x / length,
-            y: v.y / length,
-            z: v.z / length,
-        };
+        return {x: v.x / length, y: v.y / length, z: v.z / length};
     }
 
     function preventNonNumericInputs(inputElement) {
         inputElement.addEventListener("keydown", (event) => {
-            if (["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab", ".", ",", "-"].includes(event.key)) {
-                return;
-            }
-
-            if (isNaN(Number(event.key))) {
-                event.preventDefault();
-            }
+            if (["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab", ".", ",", "-"].includes(event.key)) return;
+            if (isNaN(Number(event.key))) event.preventDefault();
         });
     }
 
@@ -708,7 +760,7 @@ document.addEventListener("DOMContentLoaded", () => {
         clearTimeout(showToast.timer);
         showToast.timer = setTimeout(() => {
             toast.style.display = "none";
-        }, 3000);
+        }, 3200);
     }
 
     document.querySelectorAll('input[type="number"]').forEach(input => preventNonNumericInputs(input));
@@ -716,5 +768,5 @@ document.addEventListener("DOMContentLoaded", () => {
     changeAndSetupShape("cuboid");
     switchFrame("frame6");
     resizeCanvas();
-    showToast("Kéo chuột để xoay, lăn chuột để phóng to / thu nhỏ.");
+    showToast("Lưới và trục Oxyz sẽ tự mở rộng theo tọa độ + kích thước vật thể.");
 });
