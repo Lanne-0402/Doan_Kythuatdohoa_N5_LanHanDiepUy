@@ -1,15 +1,30 @@
 from PIL import Image, ImageDraw
 import numpy as np
 import math
+import cv2
 
 class GraphicsEngine:
-    def __init__(self, width=800, height=600):
+    def __init__(self, width, height):
         self.width = width
         self.height = height
         # Tao bang ve
         self.image = Image.new('RGB', (width, height), 'white')
         # Tao but ve
         self.draw = ImageDraw.Draw(self.image)
+        self.bg_layer = self.image.copy()
+
+    def clear(self):
+        self.image.paste(self.bg_layer, (0, 0))
+
+    def generate_frames(self):
+        while True:
+            self.clear()
+            cv_img = np.array(self.image)
+            cv_img = cv2.cvtColor(cv_img, cv2.COLOR_RGB2BGR)
+            if success:
+                frame_bytes = buffer.tobytes()
+                yield(b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+
 
     def to_screen(self, x, y):
         px_x = self.width // 2 + x*5
@@ -228,12 +243,12 @@ class GraphicsEngine:
             screen_x, screen_y = self.to_screen(current_x, current_y)
             if 0 <= screen_x < self.width and 0 <= screen_y < self.height:
                 current_color = self.getpixel(screen_x, screen_y)
-            if current_color != boundary_color and current_color != fill_color:
-                self.putpixel(current_x, current_y, fill_color)
-                stack.append((current_x + 1, current_y))
-                stack.append((current_x - 1, current_y))
-                stack.append((current_x, current_y + 1))
-                stack.append((current_x, current_y - 1))
+                if current_color != boundary_color and current_color != fill_color:
+                    self.putpixel(current_x, current_y, fill_color)
+                    stack.append((current_x + 1, current_y))
+                    stack.append((current_x - 1, current_y))
+                    stack.append((current_x, current_y + 1))
+                    stack.append((current_x, current_y - 1))
 
     # Ma tran tinh tien
     def translation_matrix(self, tx, ty):
@@ -259,41 +274,66 @@ class GraphicsEngine:
             [sin_a, cos_a, 0],
             [0, 0, 1]
         ])
-
-    # class Polygon: nhap vao danh sach cac dinh, luu tru duoi dang ma tran 3xN, co ham transform de nhan ma tran chuyen doi va ham draw_changed de ve lai hinh sau khi bi bien doi
-    class Polygon:
-        def __init__(self, vertices):
-            self.matrix = np.array([
-                [p[0] for p in vertices],
-                [p[1] for p in vertices],
-                [1]*len(vertices)
-            ])
-        # Ham nhan ma tran chuyen doi vao ma tran dinh va cap nhat lai ma tran dinh
-        def transform(self, transform_matrix):
-            self.matrix = transform_matrix @ self.matrix
-        # Ham ve lai hinh sau khi bi bien doi
-        def draw_changed(self, engine, color=(0, 0, 0)):
-            num_vertices = self.matrix.shape[1]
-            for i in range(num_vertices):
-                x1, y1 = self.matrix[0, 1], self,np.matrix[1, i]
-                next_i = (i + 1) % num_vertices
-                x2, y2 = self.matrix[0, next_i], self.matrix[1, next_i]
-                engine.draw_line(x1, y1, x2, y2, color)
-    
     # Luu file anh test
     def save(self, filename ="output.png"):
         self.image.save(filename)
 
-#test
+# class Polygon: nhap vao danh sach cac dinh, luu tru duoi dang ma tran 3xN, co ham transform de nhan ma tran chuyen doi va ham draw_changed de ve lai hinh sau khi bi bien doi
+class Polygon:
+    def __init__(self, vertices):
+        self.matrix = np.array([
+            [p[0] for p in vertices],
+            [p[1] for p in vertices],
+            [1]*len(vertices)
+        ])
+    # Ham nhan ma tran chuyen doi vao ma tran dinh va cap nhat lai ma tran dinh
+    def transform(self, transform_matrix):
+            self.matrix = transform_matrix @ self.matrix
+     # Ham ve lai hinh sau khi bi bien doi
+    def draw(self, engine, color=(0, 0, 0)):
+        num_vertices = self.matrix.shape[1]
+        for i in range(num_vertices):
+            x1, y1 = self.matrix[0, i], self.matrix[1, i]
+            next_i = (i + 1) % num_vertices
+            x2, y2 = self.matrix[0, next_i], self.matrix[1, next_i]
+            engine.draw_line(x1, y1, x2, y2, color)
+    
+# test
 if __name__ == "__main__":
-    engine = GraphicsEngine()
+    engine = GraphicsEngine(800, 600)
     engine.draw_grid()
-    engine.putpixel(20,10, (255, 0, 0))  # Red pixel at the center
-    engine.draw_rectangle(-10, -50, 30, 10, (0, 255, 0))  # Green rectangle
-    engine.boundary_fill(-5, -45, (255, 0, 0), (0, 255, 0))  # Fill the rectangle with green
-    engine.draw_any_circle(-20, 20, 15, (255, 165  , 0))  # Orange circle
-    engine.draw_any_ellipse(20, -30, 40, 30, (128, 0, 128))  # Purple ellipse
+    engine.bg_layer = engine.image.copy() # Chụp ảnh nền (tốt)
+    
+    # Vẽ các hình tĩnh trên nền
+    engine.draw_rectangle(-10, -50, 30, 10, (0, 255, 0))  
+    engine.boundary_fill(-5, -45, (255, 0, 0), (0, 255, 0))  
+    
+    # Khởi tạo hình đa giác chuyển động
+    rect_vertices = [(-50, -50), (50, -50), (50, 50), (-50, 50)]
+    my_rect = Polygon(rect_vertices)
+    print("Đang chạy Animation... Nhấn phím 'q' trên cửa sổ để thoát.")
+    
+    while True:
+        engine.clear()
+        
+        # Xoay hình
+        R = engine.rotation_matrix(2)
+        my_rect.transform(R)
+        my_rect.draw(engine, color=(0, 0, 255))
+        
+        # --- CẢI TIẾN QUAN TRỌNG CHỖ NÀY ---
+        # OpenCV cần numpy array và hệ màu BGR thay vì RGB của PIL
+        cv_image = np.array(engine.image) # Chuyển PIL Image thành Numpy
+        cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR) # Đảo màu
+        
+        cv2.imshow("2D animation", cv_image)
+        
+        # Đợi 30ms (~33 FPS) để chuyển động hiển thị mượt mà thay vì 1ms
+        if cv2.waitKey(30) & 0xFF == ord('q'):
+            break
+            
     engine.save("test_output.png")
-    print("Da ve xong")
+    print("Đã vẽ xong")
+    cv2.destroyAllWindows()
         
 
