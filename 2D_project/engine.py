@@ -30,7 +30,8 @@ class GraphicsEngine:
         px_x = self.width // 2 + x*5
         px_y = self.height // 2 - y*5
         return (px_x, px_y)
-    
+
+#ham putpixel
     def putpixel(self, x, y, color=(0, 0, 0)):
         px_x, px_y = self.to_screen(x, y)
         # DK ve diem nam trong khung hinh
@@ -92,28 +93,28 @@ class GraphicsEngine:
         self.draw_line(x2, y2, x3, y3, color)
 
     #Ve duong tron tam O va ban kinh r
-    def draw_circle(self, r, color=(0, 0, 0)):
-        r = int(r)
-        x = 0
-        y = r
-        p = 1 - r
-        while x <= y:
-            self.putpixel(x, y, color)
-            self.putpixel(-x, y, color)
-            self.putpixel(x, -y, color)
-            self.putpixel(-x, -y, color)
-            self.putpixel(y, x, color)
-            self.putpixel(-y, x, color)
-            self.putpixel(y, -x, color)
-            self.putpixel(-y, -x, color)
+    # def draw_circle(self, r, color=(0, 0, 0)):
+    #     r = int(r)
+    #     x = 0
+    #     y = r
+    #     p = 1 - r
+    #     while x <= y:
+    #         self.putpixel(x, y, color)
+    #         self.putpixel(-x, y, color)
+    #         self.putpixel(x, -y, color)
+    #         self.putpixel(-x, -y, color)
+    #         self.putpixel(y, x, color)
+    #         self.putpixel(-y, x, color)
+    #         self.putpixel(y, -x, color)
+    #         self.putpixel(-y, -x, color)
 
-            if p < 0:
-                x += 1
-                p += 2*x + 1
-            else:
-                x += 1
-                y -= 1
-                p += 2*x - 2*y +1
+    #         if p < 0:
+    #             x += 1
+    #             p += 2*x + 1
+    #         else:
+    #             x += 1
+    #             y -= 1
+    #             p += 2*x - 2*y +1
     #Ve duong tron: nhap vao tam (xc, yc) va ban kinh r
     def draw_any_circle(self, xc, yc, r, color=(0, 0, 0)):
         xc, yc, r = int(xc), int(yc), int(r)
@@ -139,51 +140,51 @@ class GraphicsEngine:
                 p += 2*x - 2*y +1
 
     #Ve elip: tam O, nhap vao ban kinh lon a, ban kinh nho b
-    def draw_ellipse(self, a, b, color=(0, 0, 0)):
-        a, b = int(a), int(b)
-        x = 0
-        y = b
-        a2 = a*a
-        b2 = b*b
-        two_a2 = 2*a2
-        two_b2 = 2*b2
-        # Mien I
-        p = b2 - a2*b + a2*0.25
-        dx = two_b2*x
-        dy = two_a2*y
-        while dx < dy:
-            self.putpixel(x, y, color)
-            self.putpixel(-x, y, color)
-            self.putpixel(x, -y, color)
-            self.putpixel(-x, -y, color)
-            if p < 0:
-                x += 1
-                dx += two_b2
-                p += dx + b2
-            else:
-                x += 1
-                y -= 1
-                dx += two_b2
-                dy -= two_a2
-                p += dx - dy + b2
+    # def draw_ellipse(self, a, b, color=(0, 0, 0)):
+    #     a, b = int(a), int(b)
+    #     x = 0
+    #     y = b
+    #     a2 = a*a
+    #     b2 = b*b
+    #     two_a2 = 2*a2
+    #     two_b2 = 2*b2
+    #     # Mien I
+    #     p = b2 - a2*b + a2*0.25
+    #     dx = two_b2*x
+    #     dy = two_a2*y
+    #     while dx < dy:
+    #         self.putpixel(x, y, color)
+    #         self.putpixel(-x, y, color)
+    #         self.putpixel(x, -y, color)
+    #         self.putpixel(-x, -y, color)
+    #         if p < 0:
+    #             x += 1
+    #             dx += two_b2
+    #             p += dx + b2
+    #         else:
+    #             x += 1
+    #             y -= 1
+    #             dx += two_b2
+    #             dy -= two_a2
+    #             p += dx - dy + b2
 
-        # Mien II
-        q = b2*(x + 0.5)*(x + 0.5) + a2*(y - 1)*(y - 1) - a2*b2
-        while y >= 0:
-            self.putpixel(x, y, color)
-            self.putpixel(-x, y, color)
-            self.putpixel(x, -y, color)
-            self.putpixel(-x, -y, color)
-            if q > 0:
-                y -= 1
-                dy -= two_a2
-                q += a2 - dy
-            else:
-                y -= 1
-                x += 1
-                dx += two_b2
-                dy -= two_a2
-                q += dx - dy + a2
+    #     # Mien II
+    #     q = b2*(x + 0.5)*(x + 0.5) + a2*(y - 1)*(y - 1) - a2*b2
+    #     while y >= 0:
+    #         self.putpixel(x, y, color)
+    #         self.putpixel(-x, y, color)
+    #         self.putpixel(x, -y, color)
+    #         self.putpixel(-x, -y, color)
+    #         if q > 0:
+    #             y -= 1
+    #             dy -= two_a2
+    #             q += a2 - dy
+    #         else:
+    #             y -= 1
+    #             x += 1
+    #             dx += two_b2
+    #             dy -= two_a2
+    #             q += dx - dy + a2
 
     #Ve elip: nhap vao tam (xc, yc) va ban kinh lon a, ban kinh nho b
     def draw_any_ellipse(self, xc, yc, a, b, color=(0, 0, 0)):
@@ -231,6 +232,19 @@ class GraphicsEngine:
                 dx += two_b2
                 dy -= two_a2
                 q += dx - dy + a2
+    #Hàm vẽ elip khuyết: nhập vào tâm (xc, yc), bán kính lớn a, bán kính nhỏ b, góc bắt đầu start_angle và góc kết thúc end_angle
+    def create_ellipse_arc(self, xc, yc, a, b, start_angle, end_angle):
+        xc, yc, a, b = int(xc), int(yc), int(a), int(b)
+        vertices = []
+        for angle in range(start_angle, end_angle + 1):
+            rad = math.radians(angle)
+            x = a * math.cos(rad)
+            y = b * math.sin(rad)
+            vertices.append((x + xc, y + yc))
+        return Polygon(vertices)
+    #Hàm vẽ cung tròn: nhập vào tâm (xc, yc), bán kính r, góc bắt đầu start_angle và góc kết thúc end_angle
+    def create_circle_arc(self, xc, yc, r, start_angle, end_angle):
+        return self.create_ellipse_arc(xc, yc, r, r, start_angle, end_angle)
 
     def getpixel(self, x, y):
         return self.image.getpixel((x, y))
@@ -297,38 +311,60 @@ class Polygon:
             next_i = (i + 1) % num_vertices
             x2, y2 = self.matrix[0, next_i], self.matrix[1, next_i]
             engine.draw_line(x1, y1, x2, y2, color)
+
+class Group:
+    def __init__(self):
+        self.shapes = []
     
+    def add(self, polygon):
+        self.shapes.append(polygon)
+    
+    def transform(self, transform_matrix):
+        for shape in self.shapes:
+            shape.transform(transform_matrix)
+    
+    def draw(self, engine, color=(0, 0, 0)):
+        for shape in self.shapes:
+            shape.draw(engine, color=color)
+
 # test
 if __name__ == "__main__":
     engine = GraphicsEngine(800, 600)
     engine.draw_grid()
-    engine.bg_layer = engine.image.copy() # Chụp ảnh nền (tốt)
-    
-    # Vẽ các hình tĩnh trên nền
-    engine.draw_rectangle(-10, -50, 30, 10, (0, 255, 0))  
-    engine.boundary_fill(-5, -45, (255, 0, 0), (0, 255, 0))  
+    engine.bg_layer = engine.image.copy() # Chụp ảnh nền
+
+    pacman_body = engine.create_circle_arc(0, 0, 30, 45, 315)
+    eye = [(5, 10), (10, 15), (15, 10), (10, 5)]
+    pacman_eye = Polygon(eye)
+
+    pacman_group = Group()
+    pacman_group.add(pacman_body)
+    pacman_group.add(pacman_eye)
     
     # Khởi tạo hình đa giác chuyển động
-    rect_vertices = [(-50, -50), (50, -50), (50, 50), (-50, 50)]
-    my_rect = Polygon(rect_vertices)
+    # rect_vertices = [(-50, -50), (50, -50), (50, 50), (-50, 50)]
+    # my_rect = Polygon(rect_vertices)
     print("Đang chạy Animation... Nhấn phím 'q' trên cửa sổ để thoát.")
     
     while True:
         engine.clear()
         
         # Xoay hình
-        R = engine.rotation_matrix(2)
-        my_rect.transform(R)
-        my_rect.draw(engine, color=(0, 0, 255))
+        # R = engine.rotation_matrix(2)
+        # my_rect.transform(R)
+        # my_rect.draw(engine, color=(0, 0, 255))
+
+        T = engine.translation_matrix(1, 0)
+        pacman_group.transform(T)
+        pacman_group.draw(engine, color=(255, 165, 0)) # Màu cam cho Pacman
+
         
-        # --- CẢI TIẾN QUAN TRỌNG CHỖ NÀY ---
-        # OpenCV cần numpy array và hệ màu BGR thay vì RGB của PIL
         cv_image = np.array(engine.image) # Chuyển PIL Image thành Numpy
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR) # Đảo màu
         
         cv2.imshow("2D animation", cv_image)
         
-        # Đợi 30ms (~33 FPS) để chuyển động hiển thị mượt mà thay vì 1ms
+        # Đợi 30ms (~33 FPS) để chuyển động hiển thị mượt mà
         if cv2.waitKey(30) & 0xFF == ord('q'):
             break
             
