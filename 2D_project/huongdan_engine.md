@@ -89,3 +89,4 @@ Các bước sử dụng:
   Khởi tạo: `my_group = Group()`
   Thêm hình: `my_group.add(shape_1), my_group.add(shape_2)`
   Biến đổi & Vẽ: `my_group.transform(matrix) và my_group.draw(engine, color)`
+

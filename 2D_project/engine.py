@@ -21,6 +21,7 @@ class GraphicsEngine:
             self.clear()
             cv_img = np.array(self.image)
             cv_img = cv2.cvtColor(cv_img, cv2.COLOR_RGB2BGR)
+            success, buffer = cv2.imencode('.jpg', cv_img)
             if success:
                 frame_bytes = buffer.tobytes()
                 yield(b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
@@ -233,7 +234,7 @@ class GraphicsEngine:
                 dy -= two_a2
                 q += dx - dy + a2
     #Hàm vẽ elip khuyết: nhập vào tâm (xc, yc), bán kính lớn a, bán kính nhỏ b, góc bắt đầu start_angle và góc kết thúc end_angle
-    def create_ellipse_arc(self, xc, yc, a, b, start_angle, end_angle):
+    def create_ellipse_arc(self, xc, yc, a, b, start_angle, end_angle, is_closed=False, seed_point=None, fill_color=None):
         xc, yc, a, b = int(xc), int(yc), int(a), int(b)
         vertices = []
         for angle in range(start_angle, end_angle + 1):
@@ -241,10 +242,10 @@ class GraphicsEngine:
             x = a * math.cos(rad)
             y = b * math.sin(rad)
             vertices.append((x + xc, y + yc))
-        return Polygon(vertices)
+        return Polygon(vertices, is_closed = is_closed, fill_seed=seed_point, fill_color=fill_color)
     #Hàm vẽ cung tròn: nhập vào tâm (xc, yc), bán kính r, góc bắt đầu start_angle và góc kết thúc end_angle
-    def create_circle_arc(self, xc, yc, r, start_angle, end_angle):
-        return self.create_ellipse_arc(xc, yc, r, r, start_angle, end_angle)
+    def create_circle_arc(self, xc, yc, r, start_angle, end_angle, is_closed=False, seed_point=None, fill_color=None):
+        return self.create_ellipse_arc(xc, yc, r, r, start_angle, end_angle, is_closed=is_closed, seed_point=seed_point, fill_color=fill_color)
 
     def getpixel(self, x, y):
         return self.image.getpixel((x, y))
@@ -294,38 +295,62 @@ class GraphicsEngine:
 
 # class Polygon: nhap vao danh sach cac dinh, luu tru duoi dang ma tran 3xN, co ham transform de nhan ma tran chuyen doi va ham draw_changed de ve lai hinh sau khi bi bien doi
 class Polygon:
-    def __init__(self, vertices):
+    def __init__(self, vertices, fill_seed=None, fill_color=None, is_closed = True):
         self.matrix = np.array([
             [p[0] for p in vertices],
             [p[1] for p in vertices],
             [1]*len(vertices)
         ])
+        self.fill_color = fill_color
+        self.is_closed = is_closed
+        if fill_seed is not None:
+            self.seed_matrix = np.array([
+                [fill_seed[0]],
+                [fill_seed[1]],
+                [1]
+            ])
+        else: self.seed_matrix = None
+
     # Ham nhan ma tran chuyen doi vao ma tran dinh va cap nhat lai ma tran dinh
     def transform(self, transform_matrix):
             self.matrix = transform_matrix @ self.matrix
+            if self.seed_matrix is not None:
+                self.seed_matrix = transform_matrix @ self.seed_matrix
+
      # Ham ve lai hinh sau khi bi bien doi
     def draw(self, engine, color=(0, 0, 0)):
         num_vertices = self.matrix.shape[1]
-        for i in range(num_vertices):
+        limit = num_vertices if self.is_closed else num_vertices - 1
+        for i in range(limit):
             x1, y1 = self.matrix[0, i], self.matrix[1, i]
             next_i = (i + 1) % num_vertices
             x2, y2 = self.matrix[0, next_i], self.matrix[1, next_i]
             engine.draw_line(x1, y1, x2, y2, color)
+        if self.seed_matrix is not None and self.fill_color is not None:
+            sx = self.seed_matrix[0, 0]
+            sy = self.seed_matrix[1, 0]
+            engine.boundary_fill(sx, sy, self.fill_color, boundary_color=color)
 
 class Group:
     def __init__(self):
         self.shapes = []
     
-    def add(self, polygon):
-        self.shapes.append(polygon)
+    def add(self, polygon, border_color=(0, 0, 0)):
+        self.shapes.append({
+            "obj": polygon,
+            "color": border_color
+        })
     
     def transform(self, transform_matrix):
-        for shape in self.shapes:
-            shape.transform(transform_matrix)
+        for item in self.shapes:
+            item["obj"].transform(transform_matrix)
     
-    def draw(self, engine, color=(0, 0, 0)):
-        for shape in self.shapes:
-            shape.draw(engine, color=color)
+    def draw(self, engine, override_color=None):
+        for item in self.shapes:
+            shape = item["obj"]
+            shape_color = item["color"]
+            final_color = override_color if override_color is not None else shape_color
+            shape.draw(engine, color=final_color)
 
 # test
 if __name__ == "__main__":
@@ -335,28 +360,21 @@ if __name__ == "__main__":
 
     pacman_body = engine.create_circle_arc(0, 0, 30, 45, 315)
     eye = [(5, 10), (10, 15), (15, 10), (10, 5)]
-    pacman_eye = Polygon(eye)
+    pacman_eye = Polygon(eye, (10, 10), (0, 0, 255))
 
     pacman_group = Group()
-    pacman_group.add(pacman_body)
-    pacman_group.add(pacman_eye)
-    
-    # Khởi tạo hình đa giác chuyển động
-    # rect_vertices = [(-50, -50), (50, -50), (50, 50), (-50, 50)]
-    # my_rect = Polygon(rect_vertices)
+    pacman_group.add(pacman_body, border_color=(0, 200, 255))
+    pacman_group.add(pacman_eye, border_color=(0, 255, 0))
+
     print("Đang chạy Animation... Nhấn phím 'q' trên cửa sổ để thoát.")
     
+    T = engine.translation_matrix(2, 1)
+
     while True:
         engine.clear()
-        
-        # Xoay hình
-        # R = engine.rotation_matrix(2)
-        # my_rect.transform(R)
-        # my_rect.draw(engine, color=(0, 0, 255))
 
-        T = engine.translation_matrix(1, 0)
         pacman_group.transform(T)
-        pacman_group.draw(engine, color=(255, 165, 0)) # Màu cam cho Pacman
+        pacman_group.draw(engine)
 
         
         cv_image = np.array(engine.image) # Chuyển PIL Image thành Numpy
