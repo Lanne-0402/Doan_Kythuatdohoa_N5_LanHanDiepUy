@@ -95,30 +95,6 @@ class GraphicsEngine:
         self.draw_line(x1, y1, x3, y3, color)
         self.draw_line(x2, y2, x3, y3, color)
 
-    #Ve duong tron tam O va ban kinh r
-    # def draw_circle(self, r, color=(0, 0, 0)):
-    #     r = int(r)
-    #     x = 0
-    #     y = r
-    #     p = 1 - r
-    #     while x <= y:
-    #         self.putpixel(x, y, color)
-    #         self.putpixel(-x, y, color)
-    #         self.putpixel(x, -y, color)
-    #         self.putpixel(-x, -y, color)
-    #         self.putpixel(y, x, color)
-    #         self.putpixel(-y, x, color)
-    #         self.putpixel(y, -x, color)
-    #         self.putpixel(-y, -x, color)
-
-    #         if p < 0:
-    #             x += 1
-    #             p += 2*x + 1
-    #         else:
-    #             x += 1
-    #             y -= 1
-    #             p += 2*x - 2*y +1
-    #Ve duong tron: nhap vao tam (xc, yc) va ban kinh r
     def draw_any_circle(self, xc, yc, r, color=(0, 0, 0)):
         xc, yc, r = round(xc), round(yc), round(r)
         x = 0
@@ -141,53 +117,6 @@ class GraphicsEngine:
                 x += 1
                 y -= 1
                 p += 2*x - 2*y +1
-
-    #Ve elip: tam O, nhap vao ban kinh lon a, ban kinh nho b
-    # def draw_ellipse(self, a, b, color=(0, 0, 0)):
-    #     a, b = int(a), int(b)
-    #     x = 0
-    #     y = b
-    #     a2 = a*a
-    #     b2 = b*b
-    #     two_a2 = 2*a2
-    #     two_b2 = 2*b2
-    #     # Mien I
-    #     p = b2 - a2*b + a2*0.25
-    #     dx = two_b2*x
-    #     dy = two_a2*y
-    #     while dx < dy:
-    #         self.putpixel(x, y, color)
-    #         self.putpixel(-x, y, color)
-    #         self.putpixel(x, -y, color)
-    #         self.putpixel(-x, -y, color)
-    #         if p < 0:
-    #             x += 1
-    #             dx += two_b2
-    #             p += dx + b2
-    #         else:
-    #             x += 1
-    #             y -= 1
-    #             dx += two_b2
-    #             dy -= two_a2
-    #             p += dx - dy + b2
-
-    #     # Mien II
-    #     q = b2*(x + 0.5)*(x + 0.5) + a2*(y - 1)*(y - 1) - a2*b2
-    #     while y >= 0:
-    #         self.putpixel(x, y, color)
-    #         self.putpixel(-x, y, color)
-    #         self.putpixel(x, -y, color)
-    #         self.putpixel(-x, -y, color)
-    #         if q > 0:
-    #             y -= 1
-    #             dy -= two_a2
-    #             q += a2 - dy
-    #         else:
-    #             y -= 1
-    #             x += 1
-    #             dx += two_b2
-    #             dy -= two_a2
-    #             q += dx - dy + a2
 
     #Ve elip: nhap vao tam (xc, yc) va ban kinh lon a, ban kinh nho b
     def draw_any_ellipse(self, xc, yc, a, b, color=(0, 0, 0)):
@@ -235,8 +164,9 @@ class GraphicsEngine:
                 dx += two_b2
                 dy -= two_a2
                 q += dx - dy + a2
+
     #Hàm vẽ elip khuyết: nhập vào tâm (xc, yc), bán kính lớn a, bán kính nhỏ b, góc bắt đầu start_angle và góc kết thúc end_angle
-    def create_ellipse_arc(self, xc, yc, a, b, start_angle, end_angle, is_closed=False, seed_point=None, fill_color=None):
+    def create_ellipse_arc(self, xc, yc, a, b, start_angle, end_angle, is_closed=False, seed_point=None, fill_color=None, is_connect = False):
         xc, yc, a, b = round(xc), round(yc), round(a), round(b)
         vertices = []
         for angle in range(start_angle, end_angle + 1):
@@ -244,10 +174,12 @@ class GraphicsEngine:
             x = a * math.cos(rad)
             y = b * math.sin(rad)
             vertices.append((x + xc, y + yc))
+        if is_connect:
+            vertices.append((xc, yc))
         return Polygon(vertices, is_closed = is_closed, fill_seed=seed_point, fill_color=fill_color)
     #Hàm vẽ cung tròn: nhập vào tâm (xc, yc), bán kính r, góc bắt đầu start_angle và góc kết thúc end_angle
-    def create_circle_arc(self, xc, yc, r, start_angle, end_angle, is_closed=False, seed_point=None, fill_color=None):
-        return self.create_ellipse_arc(xc, yc, r, r, start_angle, end_angle, is_closed=is_closed, seed_point=seed_point, fill_color=fill_color)
+    def create_circle_arc(self, xc, yc, r, start_angle, end_angle, is_closed=False, seed_point=None, fill_color=None, is_connect = False):
+        return self.create_ellipse_arc(xc, yc, r, r, start_angle, end_angle, is_closed=is_closed, seed_point=seed_point, fill_color=fill_color, is_connect=is_connect)
 
     def getpixel(self, x, y):
         return self.image.getpixel((x, y))
