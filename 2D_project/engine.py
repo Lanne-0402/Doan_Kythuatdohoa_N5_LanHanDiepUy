@@ -28,8 +28,10 @@ class GraphicsEngine:
 
 
     def to_screen(self, x, y):
-        px_x = self.width // 2 + x*5
-        px_y = self.height // 2 - y*5
+        # Làm tròn sau khi đổi từ hệ tọa độ Oxy sang pixel màn hình.
+        # Nếu không round, animation dùng số thực sẽ làm pixel bị lệch/rung.
+        px_x = round(self.width // 2 + x * 5)
+        px_y = round(self.height // 2 - y * 5)
         return (px_x, px_y)
 
 #ham putpixel
@@ -59,7 +61,7 @@ class GraphicsEngine:
 
     # Ve doan thang: nhap vao toa do 2 dinh
     def draw_line(self, x1, y1, x2, y2, color=(0, 0, 0)):
-        x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+        x1, y1, x2, y2 = round(x1), round(y1), round(x2), round(y2)
         dx = abs(x2 - x1)
         dy = abs(y2 - y1)
         sx = 1 if x1 < x2 else -1
@@ -79,7 +81,7 @@ class GraphicsEngine:
 
     #Ve HCN: nhap toa do 1 dinh (dinh duoi ben trai), chieu dai, chieu rong
     def draw_rectangle(self, x1, y1, width, height, color=(0, 0, 0)):
-        x1, y1, width, height = int(x1), int(y1), int(width), int(height)
+        x1, y1, width, height = round(x1), round(y1), round(width), round(height)
         x2 = x1 + width
         y2 = y1 + height
         self.draw_line(x1, y1, x2, y1, color) #canh duoi
@@ -118,7 +120,7 @@ class GraphicsEngine:
     #             p += 2*x - 2*y +1
     #Ve duong tron: nhap vao tam (xc, yc) va ban kinh r
     def draw_any_circle(self, xc, yc, r, color=(0, 0, 0)):
-        xc, yc, r = int(xc), int(yc), int(r)
+        xc, yc, r = round(xc), round(yc), round(r)
         x = 0
         y = r
         p = 1 - r
@@ -189,7 +191,7 @@ class GraphicsEngine:
 
     #Ve elip: nhap vao tam (xc, yc) va ban kinh lon a, ban kinh nho b
     def draw_any_ellipse(self, xc, yc, a, b, color=(0, 0, 0)):
-        xc, yc, a, b = int(xc), int(yc), int(a), int(b)
+        xc, yc, a, b = round(xc), round(yc), round(a), round(b)
         x = 0
         y = b
         a2 = a*a
@@ -235,7 +237,7 @@ class GraphicsEngine:
                 q += dx - dy + a2
     #Hàm vẽ elip khuyết: nhập vào tâm (xc, yc), bán kính lớn a, bán kính nhỏ b, góc bắt đầu start_angle và góc kết thúc end_angle
     def create_ellipse_arc(self, xc, yc, a, b, start_angle, end_angle, is_closed=False, seed_point=None, fill_color=None):
-        xc, yc, a, b = int(xc), int(yc), int(a), int(b)
+        xc, yc, a, b = round(xc), round(yc), round(a), round(b)
         vertices = []
         for angle in range(start_angle, end_angle + 1):
             rad = math.radians(angle)
@@ -251,7 +253,8 @@ class GraphicsEngine:
         return self.image.getpixel((x, y))
     # Ham to mau theo duong bien: nhap vao toa do 1 diem ben trong hinh can fill, mau fill va mau bien
     def boundary_fill(self, x, y, fill_color, boundary_color):
-        x, y = int(x), int(y)
+        # Seed sau transform thường là số thực, nên dùng round thay vì int.
+        x, y = round(x), round(y)
         stack = [(x, y)]
         while len(stack) > 0:
             current_x, current_y = stack.pop()
@@ -291,6 +294,10 @@ class GraphicsEngine:
         ])
     # Luu file anh test
     def save(self, filename ="output.png"):
+        import os
+        folder = os.path.dirname(filename)
+        if folder:
+            os.makedirs(folder, exist_ok=True)
         self.image.save(filename)
 
 # class Polygon: nhap vao danh sach cac dinh, luu tru duoi dang ma tran 3xN, co ham transform de nhan ma tran chuyen doi va ham draw_changed de ve lai hinh sau khi bi bien doi
