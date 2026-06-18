@@ -164,9 +164,9 @@ class GraphicsEngine:
                 dx += two_b2
                 dy -= two_a2
                 q += dx - dy + a2
-                
+
     #Hàm vẽ elip khuyết: nhập vào tâm (xc, yc), bán kính lớn a, bán kính nhỏ b, góc bắt đầu start_angle và góc kết thúc end_angle
-    def create_ellipse_arc(self, xc, yc, a, b, start_angle, end_angle, is_closed=False, seed_point=None, fill_color=None):
+    def create_ellipse_arc(self, xc, yc, a, b, start_angle, end_angle, is_closed=False, seed_point=None, fill_color=None, is_connect = False):
         xc, yc, a, b = round(xc), round(yc), round(a), round(b)
         vertices = []
         for angle in range(start_angle, end_angle + 1):
@@ -174,10 +174,12 @@ class GraphicsEngine:
             x = a * math.cos(rad)
             y = b * math.sin(rad)
             vertices.append((x + xc, y + yc))
+        if is_connect:
+            vertices.append((xc, yc))
         return Polygon(vertices, is_closed = is_closed, fill_seed=seed_point, fill_color=fill_color)
     #Hàm vẽ cung tròn: nhập vào tâm (xc, yc), bán kính r, góc bắt đầu start_angle và góc kết thúc end_angle
-    def create_circle_arc(self, xc, yc, r, start_angle, end_angle, is_closed=False, seed_point=None, fill_color=None):
-        return self.create_ellipse_arc(xc, yc, r, r, start_angle, end_angle, is_closed=is_closed, seed_point=seed_point, fill_color=fill_color)
+    def create_circle_arc(self, xc, yc, r, start_angle, end_angle, is_closed=False, seed_point=None, fill_color=None, is_connect = False):
+        return self.create_ellipse_arc(xc, yc, r, r, start_angle, end_angle, is_closed=is_closed, seed_point=seed_point, fill_color=fill_color, is_connect=is_connect)
 
     def getpixel(self, x, y):
         return self.image.getpixel((x, y))
