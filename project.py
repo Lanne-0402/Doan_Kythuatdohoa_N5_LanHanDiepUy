@@ -1,5 +1,10 @@
-from flask import Flask, jsonify, render_template, request
-
+import sys
+from flask import Flask, jsonify, render_template, request, Response
+# 1. Chỉ đường cho Python tìm thấy thư mục 2D
+sys.path.append('./2D_project')
+sys.path.append('./3D_project')
+from pacman import generate_pacman_frames, get_static_grid
+from duck_animation import generate_duck_frames
 from core.geometry import Point3D, make_cuboid, make_cube, make_cylinder, make_sphere
 
 app = Flask(__name__)
@@ -53,6 +58,17 @@ def build_bounds_units(xmin, xmax, ymin, ymax, zmin, zmax):
 def index():
     return render_template("index.html")
 
+@app.get("/video_pacman")
+def video_pacman():
+    return Response(generate_pacman_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.get("/video_duck")
+def video_duck():
+    return Response(generate_duck_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.get("/image_grid")
+def image_grid():
+    return Response(get_static_grid(), mimetype='image/jpeg')
 
 @app.post("/api/draw")
 def draw():
@@ -140,4 +156,4 @@ def draw():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, threaded=True)

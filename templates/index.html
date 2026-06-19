@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kỹ thuật đồ họa - Vẽ 3D Cavalier/Cabinet</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="game-container">
+    <div class="left-panel">
+
+        <div id="frame6" class="frame active">
+            <div class="dropdown-container" id="shapeDropdown6">
+                <button class="btn-ui dropdown-toggle" style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                    <span>Chọn Hình</span> <span>▼</span>
+                </button>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item" data-shape="cuboid">Hình Hộp Chữ Nhật</div>
+                    <div class="dropdown-item" data-shape="cube">Hình Lập Phương</div>
+                    <div class="dropdown-item" data-shape="cylinder">Hình Trụ</div>
+                    <div class="dropdown-item" data-shape="sphere">Hình Cầu</div>
+                </div>
+            </div>
+
+            <div class="card-ui question-box" id="questionBox">?</div>
+
+            <div class="btn-group">
+                <button class="btn-ui draw-btn">Vẽ</button>
+                <button class="btn-ui clear-btn">Xóa</button>
+            </div>
+            <button class="btn-ui to-frame5-btn">Hệ tọa độ 3D</button>
+        </div>
+
+        <div id="frame4" class="frame">
+            <div class="dropdown-container" id="shapeDropdown4">
+                <button class="btn-ui dropdown-toggle" id="selectedShapeTitle" style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                    <span>Hình Hộp Chữ Nhật</span> <span>▼</span>
+                </button>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item" data-shape="cuboid">Hình Hộp Chữ Nhật</div>
+                    <div class="dropdown-item" data-shape="cube">Hình Lập Phương</div>
+                    <div class="dropdown-item" data-shape="cylinder">Hình Trụ</div>
+                    <div class="dropdown-item" data-shape="sphere">Hình Cầu</div>
+                </div>
+            </div>
+
+            <div class="card-ui text-center">
+                <div style="margin-bottom: 18px;">
+                    <span class="label-text">Chọn phép chiếu</span>
+                    <select id="projectionMethod" class="input-dimension">
+                        <option value="cabinet">Cabinet - hệ số co 1/2</option>
+                        <option value="cavalier">Cavalier - hệ số co 1</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <span class="label-text" id="originLabel">Nhập tọa độ điểm góc / tâm</span>
+                    <div class="input-coords">
+                        <input id="coordX" type="number" placeholder="X" >
+                        <input id="coordY" type="number" placeholder="Y" >
+                        <input id="coordZ" type="number" placeholder="Z" >
+                    </div>
+                </div>
+
+                <div>
+                    <span class="label-text">Nhập kích thước của hình</span>
+                    <div id="dynamicInputs"></div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-ui draw-btn">Vẽ</button>
+                <button class="btn-ui clear-btn">Xóa</button>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-ui" id="resetViewBtn">Reset góc</button>
+                <button class="btn-ui to-frame5-btn">Hệ tọa độ 3D</button>
+            </div>
+        </div>
+
+        <div id="frame5" class="frame">
+            <!-- <button class="btn-ui" style="text-align: left;">Hệ tọa độ 3D</button> -->
+
+            <div class="card-ui text-center">
+                <span class="label-text">Kéo chuột để xoay, lăn chuột để phóng to / thu nhỏ</span>
+                <select id="projectionMethodAxes" class="input-dimension">
+                    <option value="cabinet">Cabinet - hệ số co 1/2</option>
+                    <option value="cavalier">Cavalier - hệ số co 1</option>
+                </select>
+                <div class="small-note">Đồ án 2D sẽ được thực hiện ở đây gồm một phần hình động và một phần hình tĩnh.</div>
+                <div style="margin-top: 20px;">
+                    <span class="label-text">Chọn hoạt cảnh 2D</span>
+                    <select id="animationSelect" class="input-dimension">
+                        <option value="/video_pacman">Hoạt cảnh Pacman</option>
+                        <option value="/video_duck">Hoạt cảnh Chú Vịt</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-ui" id="drawAxesBtn">Chạy</button>
+                <button class="btn-ui clear-btn">Xóa</button>
+            </div>
+            <button class="btn-ui" id="drawGridBtn" style="margin-bottom: 10px;">Vẽ hệ tọa độ</button>
+            <button class="btn-ui" id="toFrame6Btn">Hệ tọa độ 2D</button>
+        </div>
+
+    </div>
+
+    <div class="right-panel" id="displayCanvas" style="position: relative; display: flex; justify-content: center; align-items: center;">
+        <canvas id="drawingCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;"></canvas>
+        <img id="videoStream" src="" alt="Màn hình 2D" style="display: none; max-width: 100%; max-height: 100%; z-index: 2; border-radius: 12px; image-rendering: pixelated;">
+        <div id="toast"></div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

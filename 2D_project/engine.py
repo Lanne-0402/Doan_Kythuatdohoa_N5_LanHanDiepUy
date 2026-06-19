@@ -58,6 +58,16 @@ class GraphicsEngine:
         self.draw.line([(0, mid_y), (self.width, mid_y)], fill = axis_color, width = 1)
         # Oy
         self.draw.line([(mid_x, 0), (mid_x, self.height)], fill = axis_color, width = 1)
+        # Viet Oxy
+        if hasattr(self, 'to_screen'):
+            cx, cy = self.to_screen(0, 0)
+        else:
+            cx = self.width // 2
+            cy = self.height // 2
+        text_color = (0, 0, 0)
+        self.draw.text((cx - 15, cy + 5), "O", fill=text_color)
+        self.draw.text((self.width - 20, cy + 5), "X", fill=text_color)
+        self.draw.text((cx + 10, 10), "Y", fill=text_color)
 
     # Ve doan thang: nhap vao toa do 2 dinh
     def draw_line(self, x1, y1, x2, y2, color=(0, 0, 0)):
@@ -292,41 +302,41 @@ class Group:
             shape.draw(engine, color=final_color)
 
 # test
-if __name__ == "__main__":
-    engine = GraphicsEngine(800, 600)
-    engine.draw_grid()
-    engine.bg_layer = engine.image.copy() # Chụp ảnh nền
+# if __name__ == "__main__":
+#     engine = GraphicsEngine(800, 600)
+#     engine.draw_grid()
+#     engine.bg_layer = engine.image.copy() # Chụp ảnh nền
 
-    pacman_body = engine.create_circle_arc(0, 0, 30, 45, 315)
-    eye = [(5, 10), (10, 15), (15, 10), (10, 5)]
-    pacman_eye = Polygon(eye, (10, 10), (0, 0, 255))
+#     pacman_body = engine.create_circle_arc(0, 0, 30, 45, 315)
+#     eye = [(5, 10), (10, 15), (15, 10), (10, 5)]
+#     pacman_eye = Polygon(eye, (10, 10), (0, 0, 255))
 
-    pacman_group = Group()
-    pacman_group.add(pacman_body, border_color=(0, 200, 255))
-    pacman_group.add(pacman_eye, border_color=(0, 255, 0))
+#     pacman_group = Group()
+#     pacman_group.add(pacman_body, border_color=(0, 200, 255))
+#     pacman_group.add(pacman_eye, border_color=(0, 255, 0))
 
-    print("Đang chạy Animation... Nhấn phím 'q' trên cửa sổ để thoát.")
+#     print("Đang chạy Animation... Nhấn phím 'q' trên cửa sổ để thoát.")
     
-    T = engine.translation_matrix(2, 1)
+#     T = engine.translation_matrix(2, 1)
 
-    while True:
-        engine.clear()
+#     while True:
+#         engine.clear()
 
-        pacman_group.transform(T)
-        pacman_group.draw(engine)
+#         pacman_group.transform(T)
+#         pacman_group.draw(engine)
 
         
-        cv_image = np.array(engine.image) # Chuyển PIL Image thành Numpy
-        cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR) # Đảo màu
+#         cv_image = np.array(engine.image) # Chuyển PIL Image thành Numpy
+#         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR) # Đảo màu
         
-        cv2.imshow("2D animation", cv_image)
+#         cv2.imshow("2D animation", cv_image)
         
-        # Đợi 30ms (~33 FPS) để chuyển động hiển thị mượt mà
-        if cv2.waitKey(30) & 0xFF == ord('q'):
-            break
+#         # Đợi 30ms (~33 FPS) để chuyển động hiển thị mượt mà
+#         if cv2.waitKey(30) & 0xFF == ord('q'):
+#             break
             
-    engine.save("test_output.png")
-    print("Đã vẽ xong")
-    cv2.destroyAllWindows()
+#     engine.save("test_output.png")
+#     print("Đã vẽ xong")
+#     cv2.destroyAllWindows()
         
 

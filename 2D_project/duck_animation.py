@@ -1,5 +1,6 @@
 import math
 import os
+import time
 import cv2
 import numpy as np
 import importlib
@@ -495,26 +496,52 @@ def draw_one_frame(engine, cache, frame):
     paste_sprite(engine, cache.ring_front, base_x, base_y)
 
 
-def run_animation():
+# def run_animation():
+#     engine = GraphicsEngine(VIEW_WIDTH, VIEW_HEIGHT)
+#     build_background(engine)
+
+#     cache = SpriteCache()
+#     cache.build()
+
+#     print("Dang chay animation final: sprite cache + ma tran bien doi. Nhan phim q de thoat som.")
+
+#     for frame in range(TOTAL_FRAMES):
+#         draw_one_frame(engine, cache, frame)
+
+#         cv_image = np.array(engine.image)
+#         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
+#         cv2.imshow("Duck Animation - Final", cv_image)
+
+#         if cv2.waitKey(int(1000 / FPS)) & 0xFF == ord("q"):
+#             break
+
+#     cv2.destroyAllWindows()
+
+def generate_duck_frames():
     engine = GraphicsEngine(VIEW_WIDTH, VIEW_HEIGHT)
     build_background(engine)
 
     cache = SpriteCache()
     cache.build()
 
-    print("Dang chay animation final: sprite cache + ma tran bien doi. Nhan phim q de thoat som.")
+    print("Đang chạy luồng Video Vịt trên Web...")
 
-    for frame in range(TOTAL_FRAMES):
-        draw_one_frame(engine, cache, frame)
+    while True:
+        for frame in range(TOTAL_FRAMES):
+            draw_one_frame(engine, cache, frame)
 
-        cv_image = np.array(engine.image)
-        cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
-        cv2.imshow("Duck Animation - Final", cv_image)
-
-        if cv2.waitKey(int(1000 / FPS)) & 0xFF == ord("q"):
-            break
-
-    cv2.destroyAllWindows()
+            cv_image = np.array(engine.image)
+            cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
+            
+            ret, buffer = cv2.imencode('.jpg', cv_image)
+            if not ret:
+                continue
+                
+            frame_bytes = buffer.tobytes()
+            
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+            time.sleep(1.0 / FPS)
 
 
 def save_gif(filename="2D_project/duck_animation_final.gif"):
@@ -545,8 +572,8 @@ def save_gif(filename="2D_project/duck_animation_final.gif"):
     print("Da luu GIF:", filename)
 
 
-if __name__ == "__main__":
-    run_animation()
-    # Nếu muốn xuất GIF, comment dòng run_animation() phía trên
-    # rồi mở dòng dưới:
-    # save_gif()
+# if __name__ == "__main__":
+#     run_animation()
+#     # Nếu muốn xuất GIF, comment dòng run_animation() phía trên
+#     # rồi mở dòng dưới:
+#     # save_gif()
