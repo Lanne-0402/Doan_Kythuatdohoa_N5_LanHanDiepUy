@@ -3,9 +3,11 @@ from flask import Flask, jsonify, render_template, request, Response
 # 1. Chỉ đường cho Python tìm thấy thư mục 2D
 sys.path.append('./2D_project')
 sys.path.append('./3D_project')
-from pacman import generate_pacman_frames, get_static_grid
-from duck_animation import generate_duck_frames
+import pacman as pacman_anim
+import duck_animation as duck_anim
 from core.geometry import Point3D, make_cuboid, make_cube, make_cylinder, make_sphere
+import time
+import math
 
 app = Flask(__name__)
 
@@ -60,15 +62,21 @@ def index():
 
 @app.get("/video_pacman")
 def video_pacman():
-    return Response(generate_pacman_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(
+        pacman_anim.generate_pacman_frames(),
+        mimetype='multipart/x-mixed-replace; boundary=frame'
+    )
 
 @app.get("/video_duck")
 def video_duck():
-    return Response(generate_duck_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(
+        duck_anim.generate_duck_frames(),
+        mimetype='multipart/x-mixed-replace; boundary=frame'
+    )
 
 @app.get("/image_grid")
 def image_grid():
-    return Response(get_static_grid(), mimetype='image/jpeg')
+    return Response(pacman_anim.get_static_grid(), mimetype='image/jpeg')
 
 @app.post("/api/draw")
 def draw():
@@ -153,6 +161,141 @@ def draw():
         return jsonify({"ok": False, "error": str(exc)}), 400
     except Exception as exc:
         return jsonify({"ok": False, "error": f"Lỗi hệ thống: {exc}"}), 500
+
+animation_state = {
+    "current": None,      # "duck" hoặc "pacman"
+    "running": False,
+    "start_time": None,
+    "elapsed": 0.0
+}
+
+
+def start_animation_state(animation_name):
+    animation_state["current"] = animation_name
+    animation_state["running"] = True
+    animation_state["start_time"] = time.time()
+    animation_state["elapsed"] = 0.0
+
+
+def reset_animation_state():
+    animation_state["current"] = None
+    animation_state["running"] = False
+    animation_state["start_time"] = None
+    animation_state["elapsed"] = 0.0
+
+
+def get_animation_elapsed():
+    if animation_state["running"] and animation_state["start_time"] is not None:
+        return time.time() - animation_state["start_time"]
+    return animation_state["elapsed"]
+
+    """
+    Tọa độ đại diện của Pacman.
+
+    Nếu trong pacman.py sau này bạn có hàm get_pacman_position(time_sec),
+    đoạn này sẽ dùng hàm đó để khớp chính xác với animation Pacman.
+    Nếu chưa có, code dùng đường chạy mặc định từ trái sang phải.
+    """
+
+    fps = getattr(pacman_anim, "FPS", 30)
+    total_duration = getattr(pacman_anim, "TOTAL_DURATION", 8)
+    time_sec = elapsed % total_duration
+
+    if hasattr(pacman_anim, "get_pacman_position"):
+        x, y = pacman_anim.get_pacman_position(time_sec)
+    else:
+        # Fallback: Pacman chạy ngang từ trái sang phải.
+        # Nếu pacman.py của bạn dùng tọa độ khác, sửa START/END ở đây cho khớp.
+        start_x, start_y = -70, 0
+        end_x, end_y = 70, 0
+
+        t = time_sec / total_duration
+        x = start_x + (end_x - start_x) * t
+        y = start_y + (end_y - start_y) * t
+
+    return {
+        "type": "pacman",
+        "object": "Pacman",
+        "x": round(x, 2),
+        "y": round(y, 2),
+        "z": 0,
+        "frame": int(time_sec * fps),
+        "time": round(time_sec, 2),
+        "status": "Đang chạy",
+
+        "duck": None,
+        "pacman": None
+    }
+
+def calculate_animation_coords():
+    if not animation_state["running"]:
+        return {
+            "type": "none",
+            "object": "",
+            "x": "",
+            "y": "",
+            "z": "",
+            "frame": "",
+            "time": "",
+            "status": "",
+            "duck": None,
+            "pacman": None,
+            "details": []
+        }
+        return {
+            "type": "none",
+            "object": "",
+            "x": "",
+            "y": "",
+            "z": "",
+            "frame": "",
+            "time": "",
+            "status": "",
+            "duck": None,
+            "pacman": None,
+            "details": []
+        }
+
+    if animation_state["current"] == "duck":
+        return duck_anim.get_current_state()
+
+    if animation_state["current"] == "pacman":
+        return pacman_anim.get_current_state()
+
+    return {
+        "type": "none",
+        "object": "---",
+        "x": 0.00,
+        "y": 0.00,
+        "z": 0,
+        "frame": 0,
+        "time": 0.00,
+        "status": "Đang dừng",
+        "duck": None,
+        "pacman": None
+    }
+
+@app.get("/api/animation-coords")
+def api_animation_coords():
+    return jsonify(calculate_animation_coords())
+
+
+@app.post("/api/animation-start")
+def api_animation_start():
+    data = request.get_json(silent=True) or {}
+    animation_name = data.get("animation", "duck")
+
+    if animation_name not in ["duck", "pacman"]:
+        return jsonify({"ok": False, "error": "Hoạt cảnh không hợp lệ."}), 400
+
+    start_animation_state(animation_name)
+    return jsonify({"ok": True, "animation": animation_name})
+
+
+@app.post("/api/animation-reset")
+def api_animation_reset():
+    reset_animation_state()
+    return jsonify({"ok": True})
 
 
 if __name__ == "__main__":

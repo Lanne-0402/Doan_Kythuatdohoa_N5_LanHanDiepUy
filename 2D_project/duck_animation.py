@@ -8,7 +8,25 @@ import importlib.util
 import sys
 from PIL import Image, ImageDraw
 
+CURRENT_DUCK_STATE = {
+    "type": "duck",
+    "object": "Vịt + Phao",
+    "x": 0,
+    "y": 0,
+    "z": 0,
+    "frame": 0,
+    "time": 0,
+    "status": "Đang dừng",
+    "duck": {
+        "angle": 0,
+        "bob_y": 0
+    },
+    "pacman": None
+}
 
+
+def get_current_state():
+    return CURRENT_DUCK_STATE.copy()
 # ============================================================
 # Load engine.py / duck_scene.py an toàn
 # ============================================================
@@ -60,8 +78,8 @@ LBLUE = getattr(duck_scene_module, "LBLUE", (200, 240, 255))
 # =========================
 # Kích thước cửa sổ hiển thị
 # =========================
-VIEW_WIDTH = 900
-VIEW_HEIGHT = 700
+VIEW_WIDTH = 800
+VIEW_HEIGHT = 600
 
 
 # =========================
@@ -83,8 +101,8 @@ TOTAL_FRAMES = int(FPS * TOTAL_DURATION)
 # =========================
 # 1. Chuyển động chung của cả cụm
 # =========================
-START_POS = (-120, 50)
-END_POS = (190, -70)
+START_POS = (-105, 45)
+END_POS = (175, -65)
 
 
 # =========================
@@ -112,8 +130,8 @@ SPRITE_CANVAS_H = 500
 
 # Canvas rieng cho ripple vi ripple luc phong to co the rong hon sprite phao/vit.
 # Neu dung chung SPRITE_CANVAS_W/H thi cac cung nuoc lon de bi cat mat.
-RIPPLE_CANVAS_W = 1600
-RIPPLE_CANVAS_H = 1000
+RIPPLE_CANVAS_W = 1500
+RIPPLE_CANVAS_H = 900
 
 # Màu nền chroma không trùng với màu của hình.
 CHROMA_KEY = (17, 241, 193)
@@ -495,28 +513,95 @@ def draw_one_frame(engine, cache, frame):
     paste_sprite(engine, duck_sprite, base_x, base_y)
     paste_sprite(engine, cache.ring_front, base_x, base_y)
 
+    # G. Tính tọa độ đại diện cho từng đối tượng để hiển thị lên web.
 
-# def run_animation():
-#     engine = GraphicsEngine(VIEW_WIDTH, VIEW_HEIGHT)
-#     build_background(engine)
+    # Vịt đã được cache với DUCK_BASE_OFFSET, nên tọa độ đại diện của vịt
+    # lấy theo base_x/base_y cộng thêm offset này.
+    duck_x = base_x + DUCK_BASE_OFFSET[0]
+    duck_y = base_y + DUCK_BASE_OFFSET[1]
 
-#     cache = SpriteCache()
-#     cache.build()
+    # Phao dùng đúng vị trí base của cả cụm.
+    ring_x = base_x
+    ring_y = base_y
 
-#     print("Dang chay animation final: sprite cache + ma tran bien doi. Nhan phim q de thoat som.")
+    # Tia nước trong duck_scene.py có 2 cung nhưng dùng chung pivot,
+    # nên chỉ cần hiển thị 1 tọa độ đại diện cho cụm tia nước.
+    move_dx = END_POS[0] - START_POS[0]
+    move_dy = END_POS[1] - START_POS[1]
+    move_len = math.sqrt(move_dx * move_dx + move_dy * move_dy)
 
-#     for frame in range(TOTAL_FRAMES):
-#         draw_one_frame(engine, cache, frame)
+    if move_len == 0:
+        back_ux, back_uy = -1, 0
+    else:
+        back_ux = -move_dx / move_len
+        back_uy = -move_dy / move_len
 
-#         cv_image = np.array(engine.image)
-#         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
-#         cv2.imshow("Duck Animation - Final", cv_image)
+    grow_t = 1 - (1 - ripple_age) * (1 - ripple_age)
+    ripple_scale = lerp(RIPPLE_START_SCALE, RIPPLE_END_SCALE, grow_t)
 
-#         if cv2.waitKey(int(1000 / FPS)) & 0xFF == ord("q"):
-#             break
+    water_x = base_x + WATER_PIVOT_X + back_ux * WAKE_DISTANCE * ripple_scale
+    water_y = base_y + WATER_PIVOT_Y + back_uy * WAKE_DISTANCE * ripple_scale
 
-#     cv2.destroyAllWindows()
+    return {
+        "type": "duck",
+        "object": "",
+        "x": round(base_x, 2),
+        "y": round(base_y, 2),
+        "z": 0,
+        "frame": frame,
+        "time": round(time_sec, 2),
+        "status": "Đang chạy",
 
+        # Giữ lại phần cũ để code hiện tại không bị lỗi
+        "duck": {
+            "angle": round(duck_angle, 2),
+            "bob_y": round(ring_bob_y, 2)
+        },
+        "pacman": None,
+
+        # Phần mới để script.js render danh sách đối tượng
+        "details": [
+            {
+                "name": "Vịt",
+                "rows": [
+                    {
+                        "label": "Tọa độ",
+                        "value": f"({round(duck_x, 2)}, {round(duck_y, 2)})"
+                    },
+                    {
+                        "label": "Góc lắc",
+                        "value": f"{round(duck_angle, 2)}°"
+                    }
+                ]
+            },
+            {
+                "name": "Phao",
+                "rows": [
+                    {
+                        "label": "Tọa độ",
+                        "value": f"({round(ring_x, 2)}, {round(ring_y, 2)})"
+                    },
+                    {
+                        "label": "Độ nhấp nhô",
+                        "value": round(ring_bob_y, 2)
+                    }
+                ]
+            },
+            {
+                "name": "Tia nước",
+                "rows": [
+                    {
+                        "label": "Tọa độ",
+                        "value": f"({round(water_x, 2)}, {round(water_y, 2)})"
+                    },
+                    {
+                        "label": "Độ phóng to",
+                        "value": round(ripple_scale, 2)
+                    }
+                ]
+            }
+        ]
+    }
 def generate_duck_frames():
     engine = GraphicsEngine(VIEW_WIDTH, VIEW_HEIGHT)
     build_background(engine)
@@ -528,7 +613,8 @@ def generate_duck_frames():
 
     while True:
         for frame in range(TOTAL_FRAMES):
-            draw_one_frame(engine, cache, frame)
+            global CURRENT_DUCK_STATE
+            CURRENT_DUCK_STATE = draw_one_frame(engine, cache, frame)
 
             cv_image = np.array(engine.image)
             cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)

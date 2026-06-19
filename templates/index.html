@@ -85,18 +85,17 @@
             <!-- <button class="btn-ui" style="text-align: left;">Hệ tọa độ 3D</button> -->
 
             <div class="card-ui text-center">
-                <span class="label-text">Kéo chuột để xoay, lăn chuột để phóng to / thu nhỏ</span>
-                <select id="projectionMethodAxes" class="input-dimension">
-                    <option value="cabinet">Cabinet - hệ số co 1/2</option>
-                    <option value="cavalier">Cavalier - hệ số co 1</option>
-                </select>
-                <div class="small-note">Đồ án 2D sẽ được thực hiện ở đây gồm một phần hình động và một phần hình tĩnh.</div>
-                <div style="margin-top: 20px;">
+                <div style="margin-top: 6px;">
                     <span class="label-text">Chọn hoạt cảnh 2D</span>
                     <select id="animationSelect" class="input-dimension">
                         <option value="/video_pacman">Hoạt cảnh Pacman</option>
                         <option value="/video_duck">Hoạt cảnh Chú Vịt</option>
                     </select>
+                </div>
+
+                <div class="duck-coord-panel" id="duckCoordPanel">
+                    <div class="duck-coord-title">TỌA ĐỘ, THÔNG SỐ CÁC ĐỐI TƯỢNG</div>
+                    <div id="animationDetails"></div>
                 </div>
             </div>
 

@@ -185,25 +185,128 @@ document.addEventListener("DOMContentLoaded", () => {
     const clear2DBtn = document.querySelector("#frame5 .clear-btn");
     const animationSelect = document.getElementById("animationSelect");
 
+    const animationDetails = document.getElementById("animationDetails");
+async function fetchAnimationCoords() {
+    if (!animationDetails) return;
+
+    try {
+        const response = await fetch("/api/animation-coords");
+        const data = await response.json();
+
+        animationDetails.innerHTML = "";
+
+        if (!data.details || data.details.length === 0) {
+            return;
+        }
+
+        data.details.forEach(item => {
+            const block = document.createElement("div");
+            block.className = "coord-object-block";
+
+            const title = document.createElement("div");
+            title.className = "coord-object-title";
+            title.innerText = item.name;
+            block.appendChild(title);
+
+            item.rows.forEach(row => {
+                const rowDiv = document.createElement("div");
+                rowDiv.className = "duck-coord-row";
+
+                const label = document.createElement("span");
+                label.innerText = row.label;
+
+                const value = document.createElement("strong");
+                value.innerText = row.value;
+
+                rowDiv.appendChild(label);
+                rowDiv.appendChild(value);
+                block.appendChild(rowDiv);
+            });
+
+            animationDetails.appendChild(block);
+        });
+
+    } catch (error) {
+        console.error("Không lấy được tọa độ hoạt cảnh:", error);
+    }
+}
+
+    async function startAnimationCoords(animationName) {
+        await fetch("/api/animation-start", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                animation: animationName
+            })
+        });
+
+        fetchAnimationCoords();
+    }
+
+
+    async function resetAnimationCoords() {
+        await fetch("/api/animation-reset", {
+            method: "POST"
+        });
+
+        fetchAnimationCoords();
+    }
+
+
+    function getSelectedAnimationName() {
+        const selectedAnimation = animationSelect?.value || "/video_duck";
+
+        if (selectedAnimation.includes("video_pacman")) {
+            return "pacman";
+        }
+
+        if (selectedAnimation.includes("video_duck")) {
+            return "duck";
+        }
+
+        return null;
+    }
+
     // [Nút Chạy 2D]: Bắt đầu phát hoạt cảnh
     if (run2DBtn) {
-        run2DBtn.addEventListener("click", () => {
-            drawingCanvas.style.display = 'none';
-            videoStream.style.display = 'block';
-            forceLoadVideo(animationSelect?.value || "/video_pacman");
+        run2DBtn.addEventListener("click", async () => {
+            drawingCanvas.style.display = "none";
+            videoStream.style.display = "block";
+            videoStream.style.width = "100%";
+            videoStream.style.height = "100%";
+            videoStream.style.objectFit = "contain";
+
+            const selectedAnimation = animationSelect?.value || "/video_duck";
+            const animationName = getSelectedAnimationName();
+
+            if (animationName) {
+                await startAnimationCoords(animationName);
+            } else {
+                await resetAnimationCoords();
+            }
+
+            forceLoadVideo(selectedAnimation);
         });
     }
 
     // Tự động chuyển đổi hoạt cảnh (Pacman <-> Vịt)
     if (animationSelect) {
-        animationSelect.addEventListener('change', () => {
-            // Đảm bảo không gọi video nếu chỉ đang xem lưới tĩnh
-            if (videoStream.style.display === 'block' && videoStream.src.includes('video')) {
+        animationSelect.addEventListener("change", async () => {
+            if (videoStream.style.display === "block" && videoStream.src.includes("video")) {
+                const animationName = getSelectedAnimationName();
+
+                if (animationName) {
+                    await startAnimationCoords(animationName);
+                } else {
+                    await resetAnimationCoords();
+                }
+
                 forceLoadVideo(animationSelect.value);
             }
         });
     }
-
     // [Nút Vẽ hệ tọa độ 2D]: Gọi ảnh lưới tĩnh ra
     if (drawGridBtn) {
         drawGridBtn.addEventListener("click", () => {
@@ -215,10 +318,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // [Nút Xóa 2D]: Tắt hẳn màn hình, trả về nền trắng/trống
     if (clear2DBtn) {
-        clear2DBtn.addEventListener("click", () => {
-            videoStream.src = ""; // Ngắt luồng mạng lập tức
-            videoStream.style.display = 'none'; // Giấu màn hình đi
-            drawingCanvas.style.display = 'none'; 
+        clear2DBtn.addEventListener("click", async () => {
+            videoStream.src = "";
+            videoStream.style.display = "none";
+            drawingCanvas.style.display = "none";
+
+            await resetAnimationCoords();
         });
     }
 
@@ -424,6 +529,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
     // 8. KHỞI TẠO MẶC ĐỊNH KHI MỞ TRANG
     // ==========================================
+    setInterval(fetchAnimationCoords, 100);
+    fetchAnimationCoords();
     changeAndSetupShape("cuboid");
     switchFrame("frame6");
     resizeCanvas();

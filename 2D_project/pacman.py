@@ -3,6 +3,21 @@ import cv2
 import numpy as np
 import math
 from engine import GraphicsEngine
+CURRENT_PACMAN_STATE = {
+    "type": "pacman",
+    "object": "Pacman",
+    "x": 0,
+    "y": 0,
+    "z": 0,
+    "frame": 0,
+    "time": 0,
+    "status": "Đang dừng",
+    "duck": None,
+    "pacman": None
+}
+
+def get_current_state():
+    return CURRENT_PACMAN_STATE.copy()
 
 class Apple:
     def __init__(self, x, y, r=4):
@@ -116,12 +131,67 @@ def generate_pacman_frames():
                 pacman.speed = 0
 
             pacman.move()
+
             for apple in apples:
                 pacman.check_collision(apple)
 
             for apple in apples:
                 apple.draw(engine)
+
             pacman.draw(engine)
+
+            global CURRENT_PACMAN_STATE
+
+            apple_details = []
+
+            for index, apple in enumerate(apples, start=1):
+                apple_details.append({
+                    "name": f"Quả {index}",
+                    "rows": [
+                        {
+                            "label": "Tọa độ",
+                            "value": f"({round(apple.x, 2)}, {round(apple.y, 2)})"
+                        },
+                        {
+                            "label": "Trạng thái",
+                            "value": "Đã ăn" if apple.is_eaten else "Chưa ăn"
+                        }
+                    ]
+                })
+
+            CURRENT_PACMAN_STATE = {
+                "type": "pacman",
+                "object": "",
+                "x": round(pacman.x, 2),
+                "y": round(pacman.y, 2),
+                "z": 0,
+                "frame": pacman.frame_count,
+                "time": round(pacman.frame_count / 30, 2),
+                "status": "Đang dừng" if pacman.speed == 0 else "Đang chạy",
+                "duck": None,
+                "pacman": None,
+
+                "details": [
+                    {
+                        "name": "Pacman",
+                        "rows": [
+                            {
+                                "label": "Tọa độ",
+                                "value": f"({round(pacman.x, 2)}, {round(pacman.y, 2)}, 0)"
+                            },
+                            {
+                                "label": "Hướng",
+                                "value": pacman.direction
+                            },
+                            {
+                                "label": "Bán kính",
+                                "value": pacman.r
+                            }
+                        ]
+                    },
+                    *apple_details
+                ]
+            }
 
             cv_image = np.array(engine.image)
             cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
