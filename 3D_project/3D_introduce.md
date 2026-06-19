@@ -32,13 +32,18 @@ static/
   bg_pixel.jpg
 requirements.txt
 ```
+## Các thao tác
+
+- Kéo thả chuột: xoay không gian 3 chiều
+- Đúp chuột: đặt lại góc nhìn
+- Lăn chuột: phóng to và thu nhỏ
 
 ## Cách chạy
 
 ### 1. Cài thư viện
 
 ```bash
-pip install -r requirements.txt
+pip install Flask>=3.0.0
 ```
 
 ### 2. Chạy server

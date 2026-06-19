@@ -41,13 +41,11 @@ def make_cuboid(origin: Point3D, length: float, width: float, height: float) -> 
     """
     Tạo hình hộp chữ nhật.
 
-    Quy ước:
-    - origin: đỉnh dưới - trái - trước.
-    - length: chiều dài theo trục x.
-    - width : chiều sâu theo trục z.
-    - height: chiều cao theo trục y.
+    origin: đỉnh dưới - trái - trước.
+    length: chiều dài theo trục x.
+    width : chiều sâu theo trục z.
+    height: chiều cao theo trục y.
 
-    Mỗi face được sắp xếp theo chiều sao cho pháp tuyến hướng ra ngoài.
     """
     x, y, z = origin.x, origin.y, origin.z
     l, w, h = length, width, height
@@ -85,15 +83,13 @@ def make_cube(origin: Point3D, size: float) -> Mesh:
 
 def make_cylinder(base_center: Point3D, radius: float, height: float, segments: int = 36) -> Mesh:
     """
-    Tạo hình trụ dạng wireframe + faces.
+    Tạo hình trụ dạng lưới wireframe + faces.
 
     base_center: tâm đáy dưới.
     radius     : bán kính đáy.
     height     : chiều cao theo trục y.
     segments   : số đoạn chia đường tròn đáy.
 
-    Mặt trên được khai báo là một face riêng, nên khi nhìn thấy mặt trên,
-    toàn bộ đường ellipse trên sẽ là nét liền, không bị chia nửa nét đứt.
     """
     segments = max(8, int(segments))
 
@@ -116,13 +112,10 @@ def make_cylinder(base_center: Point3D, radius: float, height: float, segments: 
 
     faces: List[List[int]] = []
 
-    # Đáy dưới: normal -Y.
     faces.append(bottom_indices[:])
 
-    # Đáy trên: đảo thứ tự để normal +Y.
     faces.append(list(reversed(top_indices)))
 
-    # Các mặt bên: normal hướng ra ngoài.
     for i in range(segments):
         j = (i + 1) % segments
         faces.append([
@@ -140,6 +133,9 @@ def make_cylinder(base_center: Point3D, radius: float, height: float, segments: 
 def make_sphere(center: Point3D, radius: float, lat_steps: int = 12, lon_steps: int = 24) -> Mesh:
     """
     Tạo hình cầu dạng lưới kinh tuyến - vĩ tuyến.
+
+    lat_steps     : số bước vĩ tuyến.
+    lon_steps     : số bước kinh tuyến.
 
     """
     lat_steps = max(6, int(lat_steps))
@@ -166,7 +162,6 @@ def make_sphere(center: Point3D, radius: float, lat_steps: int = 12, lon_steps: 
 
     faces: List[List[int]] = []
 
-    # Thứ tự lat rồi lon tạo pháp tuyến hướng ra ngoài.
     for i in range(lat_steps):
         for j in range(lon_steps):
             a = grid[i][j]

@@ -452,7 +452,7 @@ async function fetchAnimationCoords() {
         for (let y = yr.min; y <= yr.max; y++) addGL({x: 0, y: y*uSize, z: zr.min*uSize}, {x: 0, y: y*uSize, z: zr.max*uSize});
         for (let z = zr.min; z <= zr.max; z++) addGL({x: 0, y: yr.min*uSize, z: z*uSize}, {x: 0, y: yr.max*uSize, z: z*uSize});
 
-        return { xStart: refPoints[0], xEnd: refPoints[1], yStart: refPoints[2], yEnd: refPoints[3], zStart: refPoints[4], zEnd: refPoints[5], ticks: [], gridLines, axisReferencePoints: refPoints, gridReferencePoints: gridRef };
+        return { xStart: refPoints[0], xEnd: refPoints[1], yStart: refPoints[2], yEnd: refPoints[3], zStart: refPoints[4], zEnd: refPoints[5], xMin: xr.min, xMax: xr.max, yMin: yr.min, yMax: yr.max, zMin: zr.min, zMax: zr.max, gridLines, axisReferencePoints: refPoints, gridReferencePoints: gridRef };
     }
 
     function drawGrid(lines, proj, transform) {
@@ -466,15 +466,158 @@ async function fetchAnimationCoords() {
     }
 
     function drawAxes(data, proj, transform) {
-        const drawL = (s, e, lbl) => {
-            const p1 = transform(projectPoint(rotatePoint(s), proj)), p2 = transform(projectPoint(rotatePoint(e), proj));
-            ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = "#1e1e1e"; ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-            ctx.font = "bold 18px Courier New"; ctx.fillText(lbl, p2.x + 12, p2.y - 8); ctx.restore();
-        };
-        drawL(data.xStart, data.xEnd, "X"); drawL(data.yStart, data.yEnd, "Y"); drawL(data.zStart, data.zEnd, "Z");
-        const o = transform(projectPoint(rotatePoint({x:0, y:0, z:0}), proj));
-        ctx.font = "bold 16px Courier New"; ctx.fillStyle = "#1e1e1e"; ctx.fillText("O", o.x - 18, o.y + 18);
+
+    const drawL = (s, e, lbl) => {
+
+        const p1 = transform(
+            projectPoint(
+                rotatePoint(s),
+                proj
+            )
+        );
+
+        const p2 = transform(
+            projectPoint(
+                rotatePoint(e),
+                proj
+            )
+        );
+
+        ctx.save();
+
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "#1e1e1e";
+
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+
+        ctx.font = "bold 18px Courier New";
+        ctx.fillStyle = "#1e1e1e";
+        ctx.fillText(lbl, p2.x + 12, p2.y - 8);
+
+        ctx.restore();
+
+        return { p1, p2 };
+    };
+
+    const xAxis = drawL(data.xStart, data.xEnd, "X");
+    const yAxis = drawL(data.yStart, data.yEnd, "Y");
+    const zAxis = drawL(data.zStart, data.zEnd, "Z");
+
+    const o = transform(
+        projectPoint(
+            rotatePoint({x:0, y:0, z:0}),
+            proj
+        )
+    );
+
+    ctx.save();
+    ctx.font = "bold 16px Courier New";
+    ctx.fillStyle = "#1e1e1e";
+    ctx.fillText("O", o.x - 18, o.y + 18);
+    ctx.restore();
+
+    //----------------------------------
+    // VẠCH CHIA OX
+    //----------------------------------
+
+    drawAxisTicks(
+        data.xMin,
+        data.xMax,
+        (v) => ({x:v*5, y:0, z:0}),
+        xAxis,
+        proj,
+        transform
+    );
+
+    //----------------------------------
+    // VẠCH CHIA OY
+    //----------------------------------
+
+    drawAxisTicks(
+        data.yMin,
+        data.yMax,
+        (v) => ({x:0, y:v*5, z:0}),
+        yAxis,
+        proj,
+        transform
+    );
+
+    //----------------------------------
+    // VẠCH CHIA OZ
+    //----------------------------------
+
+    drawAxisTicks(
+        data.zMin,
+        data.zMax,
+        (v) => ({x:0, y:0, z:v*5}),
+        zAxis,
+        proj,
+        transform
+    );
+}
+
+    function drawAxisTicks(minVal, maxVal, pointFn, axis, proj, transform) {
+
+    const dx = axis.p2.x - axis.p1.x;
+    const dy = axis.p2.y - axis.p1.y;
+
+    const len = Math.hypot(dx, dy);
+
+    if (len < 1) return;
+
+    const nx = -dy / len;
+    const ny = dx / len;
+
+    const tickSize = 4;
+
+    for (let i = minVal; i <= maxVal; i++) {
+
+        if (i === 0) continue;
+
+        const p = transform(
+            projectPoint(
+                rotatePoint(pointFn(i)),
+                proj
+            )
+        );
+
+        ctx.save();
+
+        ctx.strokeStyle = "#1e1e1e";
+        ctx.lineWidth = 1;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            p.x - nx * tickSize,
+            p.y - ny * tickSize
+        );
+
+        ctx.lineTo(
+            p.x + nx * tickSize,
+            p.y + ny * tickSize
+        );
+
+        ctx.stroke();
+
+        if (i % 5 === 0) {
+
+            ctx.font = "11px Courier New";
+            ctx.fillStyle = "#1e1e1e";
+
+            ctx.fillText(
+                i,
+                p.x + nx * 10,
+                p.y + ny * 10
+            );
+        }
+
+        ctx.restore();
     }
+}
 
     function drawMeshWithHiddenLines(mesh, rVerts, pVerts, transform) {
         const visibleFaces = (mesh.faces || []).map(f => {
