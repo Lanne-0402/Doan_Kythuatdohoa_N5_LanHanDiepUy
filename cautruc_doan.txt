@@ -1,0 +1,22 @@
+DoAn_KyThuatDoHoa/
+│
+├── project.py                  <-- Trái tim của Server Web
+│
+├── 2D_project/             <-- Thư mục 2D
+│   ├── engine.py
+│   ├── pacman.py
+│   └── duck_animation.py
+|        └── duck_scene.py
+│
+├── 3D_project/             <-- Thư mục 3D
+│   └── core
+|       └── __init__.py
+|       └── geometry.py 
+|       └── projection.py          
+│
+├── static/                 <-- Đưa các file tĩnh vào
+│   ├── style.css
+│   ├── script.js
+│
+└── templates/              <-- Đưa HTML vào
+    └── index.html
