@@ -2,7 +2,7 @@ import time
 import cv2
 import numpy as np
 import math
-from engine import GraphicsEngine, Polygon, Group
+from engine import GraphicsEngine
 
 class Apple:
     def __init__(self, x, y, r=4):
@@ -145,61 +145,3 @@ def get_static_grid():
     ret, buffer = cv2.imencode('.jpg', cv_image)
     return buffer.tobytes()
 
-# if __name__ == "__main__":
-#     engine = GraphicsEngine(800, 600)
-#     engine.draw_grid()
-
-#     wall_color = (139, 69, 19)
-   
-    # engine.draw_rectangle(-70, 20, 40, 50, color=wall_color)
-    # engine.boundary_fill(-50, 45, fill_color=wall_color, boundary_color=wall_color)
-
-    # engine.draw_rectangle(-70, -60, 40, 40, color=wall_color)
-    # engine.boundary_fill(-50, -40, fill_color=wall_color, boundary_color=wall_color)
-
-    # engine.draw_rectangle(20, 50, 50, 10, color=wall_color)
-    # engine.boundary_fill(45, 55, fill_color=wall_color, boundary_color=wall_color)
-
-    # engine.draw_rectangle(10, -70, 30, 40, color=wall_color) 
-    # engine.boundary_fill(25, -50, fill_color=wall_color, boundary_color=wall_color)
-
-#     engine.bg_layer = engine.image.copy()
-
-#     pacman = Pacman(-60, 0, r=10)
-    # apples = [
-    #     Apple(0, 0, r=4),
-    #     Apple(-10, 40, r=4),
-    #     Apple(60, 30, r=4),
-    #     Apple(50, -25, r=4)
-    # ]
-#     print("Đang chạy hoạt cảnh...Nhấn 'q' để thoát.")
-
-#     while True:
-#         engine.clear()
-        # if not apples[0].is_eaten:
-        #     pacman.direction = "RIGHT"
-        # elif not apples[1].is_eaten:
-        #     pacman.direction = "UP"
-        # elif not apples[2].is_eaten:
-        #     pacman.direction = "RIGHT"
-        # elif not apples[3].is_eaten:
-        #     pacman.direction = "DOWN"
-        # else:
-        #     pacman.speed = 0
-
-        # pacman.move()
-        # for apple in apples:
-        #     pacman.check_collision(apple)
-
-        # for apple in apples:
-        #     apple.draw(engine)
-        # pacman.draw(engine)
-
-#         cv_image = np.array(engine.image)
-#         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
-#         cv2.imshow("Pacman Animation", cv_image)
-
-#         if cv2.waitKey(30) & 0xFF == ord('q'):
-#             break
-
-#     cv2.destroyAllWindows()
