@@ -138,7 +138,6 @@ def generate_pacman_frames():
 def get_static_grid():
     engine = GraphicsEngine(800, 600)
     engine.draw_grid()
-    # (Nếu bạn muốn hiện cả tường màu nâu thì copy code vẽ tường vào đây)
     
     cv_image = np.array(engine.image)
     cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
