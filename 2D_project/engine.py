@@ -28,8 +28,6 @@ class GraphicsEngine:
 
 
     def to_screen(self, x, y):
-        # Làm tròn sau khi đổi từ hệ tọa độ Oxy sang pixel màn hình.
-        # Nếu không round, animation dùng số thực sẽ làm pixel bị lệch/rung.
         px_x = round(self.width // 2 + x * 5)
         px_y = round(self.height // 2 - y * 5)
         return (px_x, px_y)
@@ -234,13 +232,6 @@ class GraphicsEngine:
             [sin_a, cos_a, 0],
             [0, 0, 1]
         ])
-    # Luu file anh test
-    def save(self, filename ="output.png"):
-        import os
-        folder = os.path.dirname(filename)
-        if folder:
-            os.makedirs(folder, exist_ok=True)
-        self.image.save(filename)
 
 # class Polygon: nhap vao danh sach cac dinh, luu tru duoi dang ma tran 3xN, co ham transform de nhan ma tran chuyen doi va ham draw_changed de ve lai hinh sau khi bi bien doi
 class Polygon:
@@ -300,43 +291,3 @@ class Group:
             shape_color = item["color"]
             final_color = override_color if override_color is not None else shape_color
             shape.draw(engine, color=final_color)
-
-# test
-# if __name__ == "__main__":
-#     engine = GraphicsEngine(800, 600)
-#     engine.draw_grid()
-#     engine.bg_layer = engine.image.copy() # Chụp ảnh nền
-
-#     pacman_body = engine.create_circle_arc(0, 0, 30, 45, 315)
-#     eye = [(5, 10), (10, 15), (15, 10), (10, 5)]
-#     pacman_eye = Polygon(eye, (10, 10), (0, 0, 255))
-
-#     pacman_group = Group()
-#     pacman_group.add(pacman_body, border_color=(0, 200, 255))
-#     pacman_group.add(pacman_eye, border_color=(0, 255, 0))
-
-#     print("Đang chạy Animation... Nhấn phím 'q' trên cửa sổ để thoát.")
-    
-#     T = engine.translation_matrix(2, 1)
-
-#     while True:
-#         engine.clear()
-
-#         pacman_group.transform(T)
-#         pacman_group.draw(engine)
-
-        
-#         cv_image = np.array(engine.image) # Chuyển PIL Image thành Numpy
-#         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR) # Đảo màu
-        
-#         cv2.imshow("2D animation", cv_image)
-        
-#         # Đợi 30ms (~33 FPS) để chuyển động hiển thị mượt mà
-#         if cv2.waitKey(30) & 0xFF == ord('q'):
-#             break
-            
-#     engine.save("test_output.png")
-#     print("Đã vẽ xong")
-#     cv2.destroyAllWindows()
-        
-
