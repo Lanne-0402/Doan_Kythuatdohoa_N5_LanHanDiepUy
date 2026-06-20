@@ -232,6 +232,22 @@ class GraphicsEngine:
             [sin_a, cos_a, 0],
             [0, 0, 1]
         ])
+    #Ma tran doi xung
+    # Ma tran doi xung qua truc X
+    def reflection_matrix_x(self):
+        return np.array([
+            [1,  0, 0],
+            [0, -1, 0],
+            [0,  0, 1]
+        ])
+
+    # Ma tran doi xung qua truc Y
+    def reflection_matrix_y(self):
+        return np.array([
+            [-1, 0, 0],
+            [0,  1, 0],
+            [0,  0, 1]
+        ])
 
 # class Polygon: nhap vao danh sach cac dinh, luu tru duoi dang ma tran 3xN, co ham transform de nhan ma tran chuyen doi va ham draw_changed de ve lai hinh sau khi bi bien doi
 class Polygon:
@@ -291,3 +307,10 @@ class Group:
             shape_color = item["color"]
             final_color = override_color if override_color is not None else shape_color
             shape.draw(engine, color=final_color)
+
+# if __name__ == "__main__":
+#     engine = GraphicsEngine(800, 600)
+#     engine.draw_grid()
+#     engine.bg_layer = engine.image.copy()
+#     engine.draw_line(5, 6, 40, 25)
+    

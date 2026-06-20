@@ -40,6 +40,7 @@ class Pacman:
         self.mouth_angles = [5, 15, 25, 35, 45, 35, 25, 15]
         self.direction = "RIGHT"
         self.speed = 2
+        self.is_flipped = False
 
     def move(self):
         if self.direction == "RIGHT":
@@ -84,9 +85,17 @@ class Pacman:
         start_angle = base_start + offset
         end_angle = base_end + offset
         body = engine.create_circle_arc(self.x, self.y, self.r, start_angle, end_angle, is_closed=True, seed_point = (seed_x, seed_y), fill_color = (255, 255, 0), is_connect = True)
-        body.draw(engine, color = (255, 200, 0))
-
         eye = engine.create_circle_arc(eye_x, eye_y, 2, 0, 360, is_closed=True, seed_point=(eye_x, eye_y), fill_color=(0, 0, 0))
+        #Lat pacman
+        if self.is_flipped:
+            t1 = engine.translation_matrix(-self.x, -self.y)
+            ref = engine.reflection_matrix_x()
+            t2 = engine.translation_matrix(self.x, self.y)
+            transform_matrix = t2 @ ref @ t1
+            body.transform(transform_matrix)
+            eye.transform(transform_matrix)
+        
+        body.draw(engine, color = (255, 200, 0))
         eye.draw(engine, color=(0, 0, 0))
 
         self.frame_count += 1
@@ -129,6 +138,7 @@ def generate_pacman_frames():
                 pacman.direction = "DOWN"
             else:
                 pacman.speed = 0
+                pacman.is_flipped = True
 
             pacman.move()
 
@@ -213,4 +223,3 @@ def get_static_grid():
     cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
     ret, buffer = cv2.imencode('.jpg', cv_image)
     return buffer.tobytes()
-
