@@ -1,15 +1,27 @@
+import os
 import sys
 from flask import Flask, jsonify, render_template, request, Response
-# 1. Chỉ đường cho Python tìm thấy thư mục 2D
-sys.path.append('./2D_project')
-sys.path.append('./3D_project')
+
+# Khi chạy Python bình thường: BASE_DIR là thư mục project.
+# Khi chạy file .exe: BASE_DIR là thư mục tạm PyInstaller giải nén.
+if getattr(sys, "frozen", False):
+    BASE_DIR = sys._MEIPASS
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+sys.path.insert(0, os.path.join(BASE_DIR, "2D_project"))
+sys.path.insert(0, os.path.join(BASE_DIR, "3D_project"))
 import pacman as pacman_anim
 import duck_animation as duck_anim
 from core.geometry import Point3D, make_cuboid, make_cube, make_cylinder, make_sphere
 import time
 import math
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, "templates"),
+    static_folder=os.path.join(BASE_DIR, "static")
+)
 
 UNIT_SIZE = 5.0  # 1 đơn vị = 5 pixel nội bộ
 
@@ -299,4 +311,16 @@ def api_animation_reset():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, threaded=True)
+    import webbrowser
+    from threading import Timer
+
+    # Tự mở giao diện khi chạy file .exe
+    Timer(1.0, lambda: webbrowser.open("http://127.0.0.1:5000")).start()
+
+    app.run(
+        host="127.0.0.1",
+        port=5000,
+        debug=False,
+        threaded=True,
+        use_reloader=False
+    )
