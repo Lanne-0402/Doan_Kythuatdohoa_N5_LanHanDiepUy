@@ -2,7 +2,7 @@
 Repo chứa mã nguồn đồ án môn Kỹ thuật đồ hoạ về 2D và 3D của nhóm 2 gồm: Lan, Hân, Diệp, Uy
 
 ## Cấu trúc hệ thống
-
+```text
 DoAn_KyThuatDoHoa/
 │
 ├── dist/                   <-- Đóng gói chương trình
