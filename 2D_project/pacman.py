@@ -91,6 +91,7 @@ class Pacman:
             t1 = engine.translation_matrix(-self.x, -self.y)
             ref = engine.reflection_matrix_x()
             t2 = engine.translation_matrix(self.x, self.y)
+
             transform_matrix = t2 @ ref @ t1
             body.transform(transform_matrix)
             eye.transform(transform_matrix)
@@ -168,7 +169,15 @@ def generate_pacman_frames():
                         }
                     ]
                 })
+            display_direction = pacman.direction
 
+            if pacman.is_flipped:
+                display_direction = {
+                    "UP": "DOWN",
+                    "DOWN": "UP",
+                    "LEFT": "LEFT",
+                    "RIGHT": "RIGHT"
+                }[pacman.direction]
             CURRENT_PACMAN_STATE = {
                 "type": "pacman",
                 "object": "",
@@ -180,7 +189,7 @@ def generate_pacman_frames():
                 "status": "Đang dừng" if pacman.speed == 0 else "Đang chạy",
                 "duck": None,
                 "pacman": None,
-
+                
                 "details": [
                     {
                         "name": "Pacman",
@@ -191,7 +200,7 @@ def generate_pacman_frames():
                             },
                             {
                                 "label": "Hướng",
-                                "value": pacman.direction
+                                "value": display_direction
                             },
                             {
                                 "label": "Bán kính",
