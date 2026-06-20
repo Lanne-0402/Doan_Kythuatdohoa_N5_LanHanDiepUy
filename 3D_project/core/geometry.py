@@ -23,7 +23,6 @@ class Mesh:
     faces: List[List[int]] = field(default_factory=list)
 
     def rebuild_edges_from_faces(self) -> None:
-        """Tạo danh sách cạnh duy nhất từ danh sách mặt."""
         edge_set = set()
 
         for face in self.faces:
