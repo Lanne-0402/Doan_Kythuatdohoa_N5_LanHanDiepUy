@@ -1,6 +1,20 @@
 import os
 import sys
 from flask import Flask, jsonify, render_template, request, Response
+from flask_cors import CORS
+
+CORS(
+    app,
+    resources={
+        r"/*": {
+            "origins": [
+                "https://lanne-0402.github.io/Doan_Kythuatdohoa_N5_LanHanDiepUy/",
+                "http://127.0.0.1:5000",
+                "http://localhost:5000",
+            ]
+        }
+    },
+)
 
 # Khi chạy Python bình thường: BASE_DIR là thư mục project.
 # Khi chạy file .exe: BASE_DIR là thư mục tạm PyInstaller giải nén.
