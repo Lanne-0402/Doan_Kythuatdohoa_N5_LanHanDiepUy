@@ -1,4 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const API_BASE_URL = "https://doan-kythuatdohoa-n5-lanhandiepuy.onrender.com/";
+    function apiUrl(path) {
+    return `${API_BASE_URL}${path}`;}
     // ==========================================
     // 1. KHAI BÁO BIẾN VÀ THÀNH PHẦN GIAO DIỆN
     // ==========================================
@@ -177,7 +180,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 5. ĐIỀU PHỐI NÚT BẤM 2D / 3D
     // ==========================================
     function forceLoadVideo(routePath) {
-        videoStream.src = routePath + "?t=" + new Date().getTime();
+        videoStream.src = `${apiUrl(routePath)}?t=${Date.now()}`;
     }
 
     const run2DBtn = document.getElementById("drawAxesBtn");
@@ -190,7 +193,7 @@ async function fetchAnimationCoords() {
     if (!animationDetails) return;
 
     try {
-        const response = await fetch("/api/animation-coords");
+        const response = await fetch(apiUrl("/api/animation-coords"));
         const data = await response.json();
 
         animationDetails.innerHTML = "";
@@ -232,7 +235,7 @@ async function fetchAnimationCoords() {
 }
 
     async function startAnimationCoords(animationName) {
-        await fetch("/api/animation-start", {
+        await fetch(apiUrl("/api/animation-start"), {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -247,7 +250,7 @@ async function fetchAnimationCoords() {
 
 
     async function resetAnimationCoords() {
-        await fetch("/api/animation-reset", {
+        await fetch(apiUrl("/api/animation-reset"), {
             method: "POST"
         });
 
@@ -369,7 +372,7 @@ async function fetchAnimationCoords() {
         };
 
         try {
-            const response = await fetch("/api/draw", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(payload) });
+            const response = await fetch(apiUrl("/api/draw"), { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(payload) });
             const data = await response.json();
             if (!response.ok || !data.ok) throw new Error(data.error || "Không thể vẽ hình.");
 
