@@ -1,7 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const API_BASE_URL = "https://doan-kythuatdohoa-n5-lanhandiepuy.onrender.com/";
+    const API_BASE_URL = "https://doan-kythuatdohoa-n5-lanhandiepuy.onrender.com";
     function apiUrl(path) {
-    return `${API_BASE_URL}${path}`;}
+        return `${API_BASE_URL}${path}`;
+    }
     // ==========================================
     // 1. KHAI BÁO BIẾN VÀ THÀNH PHẦN GIAO DIỆN
     // ==========================================

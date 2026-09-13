@@ -1,6 +1,6 @@
 import os
 import sys
-from flask import Flask, jsonify, render_template, request, Response
+from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
 
 # Khi chạy Python bình thường: BASE_DIR là thư mục project.
@@ -20,7 +20,6 @@ import math
 
 app = Flask(
     __name__,
-    template_folder=os.path.join(BASE_DIR, "templates"),
     static_folder=os.path.join(BASE_DIR, "static")
 )
 CORS(
@@ -28,7 +27,7 @@ CORS(
     resources={
         r"/*": {
             "origins": [
-                "https://lanne-0402.github.io/Doan_Kythuatdohoa_N5_LanHanDiepUy/",
+                "https://lanne-0402.github.io",
                 "http://127.0.0.1:5000",
                 "http://localhost:5000",
             ]
@@ -81,8 +80,12 @@ def build_bounds_units(xmin, xmax, ymin, ymax, zmin, zmax):
 
 
 @app.get("/")
-def index():
-    return render_template("index.html")
+def health_check():
+    return jsonify({
+        "ok": True,
+        "service": "DoAn Ky thuat do hoa API",
+        "frontend": "https://lanne-0402.github.io/Doan_Kythuatdohoa_N5_LanHanDiepUy/",
+    })
 
 @app.get("/video_pacman")
 def video_pacman():
